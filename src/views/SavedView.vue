@@ -57,12 +57,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
-import { useSupabase } from '@/composables/useSupabase'
-import Header from '@/components/layout/Header.vue'
-import Card from '@/components/common/Card.vue'
-import Button from '@/components/common/Button.vue'
-import Dropdown from '@/components/common/Dropdown.vue'
+import { useAuthStore } from './../stores/authStore'
+import { useSupabase } from './../composables/useSupabase'
+import Header from './../components/layout/Header.vue'
+import Card from './../components/common/Card.vue'
+import Button from './../components/common/Button.vue'
+import Dropdown from './../components/common/Dropdown.vue'
 
 const savedProspects = ref<any[]>([])
 const filterEstado = ref('')

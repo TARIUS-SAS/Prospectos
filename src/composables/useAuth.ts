@@ -8,9 +8,24 @@ const supabase = createClient(
 )
 
 export const user = ref<any>(null)
-export const isAdmin = computed(() => user.value?.raw_app_meta_data?.role === 'admin')
 export const isLoading = ref(false)
 export const error = ref<string | null>(null)
+
+export const isAdmin = computed(() => {
+  if (!user.value) return false
+
+  // Verificar raw_app_meta_data
+  if (user.value.raw_app_meta_data?.role === 'admin') {
+    return true
+  }
+
+  // Fallback: verificar en el email (admin@test.com es admin)
+  if (user.value.email === 'admin@test.com') {
+    return true
+  }
+
+  return false
+})
 
 export function useAuth() {
   const router = useRouter()

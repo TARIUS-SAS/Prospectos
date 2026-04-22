@@ -4,7 +4,25 @@
       "Bash(git commit -m ' *)",
       "Bash(npm audit *)",
       "Bash(npm test *)",
-      "Bash(git commit -m 'chore: Add testing, documentation, and deployment configs for Etapa 9 *)"
+      "Bash(git commit -m 'chore: Add testing, documentation, and deployment configs for Etapa 9 *)",
+      "Bash(curl -s -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwZmdqc3hsbnNvZnl3bGF6cmFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjUzOTYsImV4cCI6MjA5MjQ0MTM5Nn0.GlcS1XXkcr9VSA4y5Kaah8bUZp46DfC04M25S2JpPDc\" \"https://fpfgjsxlnsofywlazrar.supabase.co/rest/v1/\")",
+      "Bash(npx supabase *)",
+      "Bash(supabase status *)",
+      "Bash(npm list *)",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(curl -s http://localhost:5174/)",
+      "Bash(curl -s http://localhost:5175/)",
+      "Bash(pkill -9 -f \"node\\\\|vite\\\\|npm\")",
+      "Bash(npm run *)",
+      "Bash(curl -v http://localhost:5173/)",
+      "Bash(sed -i \"s/@\\\\/stores/../stores/g\" src/components/layout/Header.vue)",
+      "Bash(sed -i \"s/@\\\\/composables/../composables/g\" src/components/layout/Header.vue)",
+      "Bash(sed -i \"s/@\\\\/stores/.\\\\/..\\\\/stores/g\" src/views/*.vue)",
+      "Bash(sed -i \"s/@\\\\/composables/.\\\\/..\\\\/composables/g\" src/views/*.vue)",
+      "Bash(sed -i \"s/@\\\\/components/.\\\\/..\\\\/components/g\" src/views/*.vue)",
+      "Bash(curl -s http://localhost:5177/)",
+      "Bash(curl -s http://localhost:5178/)",
+      "Bash(git commit -m 'fix: resolver imports alias y rol admin en cliente *)"
     ]
   }
 }

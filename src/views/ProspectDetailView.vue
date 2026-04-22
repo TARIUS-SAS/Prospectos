@@ -105,9 +105,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Header from '@/components/layout/Header.vue'
-import Card from '@/components/common/Card.vue'
-import Button from '@/components/common/Button.vue'
+import Header from './../components/layout/Header.vue'
+import Card from './../components/common/Card.vue'
+import Button from './../components/common/Button.vue'
 const activeTab = ref('Actual')
 const tabs = ['Actual', 'Anterior', 'Comparación']
 

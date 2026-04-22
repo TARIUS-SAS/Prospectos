@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest'
-import { useScoring } from './useScoring'
 
 describe('useScoring', () => {
   it('debería calcular score correctamente (sin website)', async () => {

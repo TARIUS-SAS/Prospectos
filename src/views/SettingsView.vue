@@ -52,12 +52,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
-import { useSupabase } from '@/composables/useSupabase'
-import Header from '@/components/layout/Header.vue'
-import Card from '@/components/common/Card.vue'
-import Input from '@/components/common/Input.vue'
-import Button from '@/components/common/Button.vue'
+import { useAuthStore } from './../stores/authStore'
+import { useSupabase } from './../composables/useSupabase'
+import Header from './../components/layout/Header.vue'
+import Card from './../components/common/Card.vue'
+import Input from './../components/common/Input.vue'
+import Button from './../components/common/Button.vue'
 
 const authStore = useAuthStore()
 const supabase = useSupabase()

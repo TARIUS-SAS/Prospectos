@@ -34,8 +34,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/authStore'
-import Button from '@/components/common/Button.vue'
+import { useAuthStore } from '../../stores/authStore'
+import Button from '../common/Button.vue'
 
 const authStore = useAuthStore()
 

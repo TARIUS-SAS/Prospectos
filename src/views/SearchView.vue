@@ -120,13 +120,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import Header from '@/components/layout/Header.vue'
-import Card from '@/components/common/Card.vue'
-import Input from '@/components/common/Input.vue'
-import Dropdown from '@/components/common/Dropdown.vue'
-import Button from '@/components/common/Button.vue'
-import { useCosts } from '@/composables/useCosts'
-import { useSupabase } from '@/composables/useSupabase'
+import Header from './../components/layout/Header.vue'
+import Card from './../components/common/Card.vue'
+import Input from './../components/common/Input.vue'
+import Dropdown from './../components/common/Dropdown.vue'
+import Button from './../components/common/Button.vue'
+import { useCosts } from './../composables/useCosts'
+import { useSupabase } from './../composables/useSupabase'
 
 const { calculateSearchCost } = useCosts()
 const supabase = useSupabase()

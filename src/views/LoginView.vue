@@ -51,9 +51,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
-import Input from '@/components/common/Input.vue'
-import Button from '@/components/common/Button.vue'
+import { useAuthStore } from './../stores/authStore'
+import Input from './../components/common/Input.vue'
+import Button from './../components/common/Button.vue'
 
 const authStore = useAuthStore()
 
