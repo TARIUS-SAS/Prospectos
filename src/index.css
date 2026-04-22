@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply transition-colors;
+}
+
+body {
+  background-color: #e8d8cb;
+  color: #1a2735;
+}
+
+@layer components {
+  .card {
+    @apply rounded-lg border-2 border-[#d4c4bb] bg-white p-4 shadow-sm;
+  }
+}
