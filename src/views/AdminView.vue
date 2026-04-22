@@ -1,109 +1,122 @@
 <template>
-  <div class="min-h-screen bg-[#e8d8cb] p-6">
-    <Header />
+  <div class="app-content">
+    <div class="page-head">
+      <div class="page-head-left">
+        <p>Administración</p>
+        <h1>Admin Panel</h1>
+      </div>
+    </div>
 
-    <div class="max-w-7xl mx-auto">
-      <h1 class="text-3xl font-bold text-[#1a2735] mb-8">Admin Dashboard</h1>
-
+    <div class="page-main">
       <!-- Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card highlight="none">
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-[#6b7280]">Costo real (mes)</p>
-            <p class="text-3xl font-bold text-[#1a2735]">${{ adminStats.costoReal.toFixed(2) }}</p>
-          </div>
-        </Card>
-
-        <Card highlight="none">
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-[#6b7280]">Ingresos (mes)</p>
-            <p class="text-3xl font-bold text-[#b87333]">${{ adminStats.ingresos.toFixed(2) }}</p>
-          </div>
-        </Card>
-
-        <Card highlight="none">
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-[#6b7280]">Margen bruto</p>
-            <p class="text-3xl font-bold text-[#22c55e]">{{ adminStats.margenBruto.toFixed(1) }}%</p>
-          </div>
-        </Card>
+      <div class="stats-grid" style="margin-bottom: 28px;">
+        <div class="stat-card">
+          <div class="label"><span class="dot"></span>Costo real</div>
+          <div class="value">${{ adminStats.costReal.toFixed(2) }}</div>
+          <div class="trend">mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="label"><span class="dot"></span>Ingresos</div>
+          <div class="value">${{ adminStats.ingresos.toFixed(2) }}</div>
+          <div class="trend">mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="label"><span class="dot"></span>Margen</div>
+          <div class="value">{{ adminStats.margen }}%</div>
+          <div class="trend">neto</div>
+        </div>
       </div>
 
-      <!-- Navigation tabs -->
-      <div class="mb-6 flex gap-4 border-b-2 border-[#d4c4bb]">
+      <!-- Tabs -->
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--line-soft); padding-bottom: 12px;">
         <button
-          @click="activeTab = 'usuarios'"
-          :class="[
-            'pb-3 font-medium transition-colors',
-            activeTab === 'usuarios' ? 'text-[#b87333] border-b-4 border-[#b87333]' : 'text-[#6b7280]',
-          ]"
+          v-for="tab in ['Usuarios', 'Facturación', 'Configuración']"
+          :key="tab"
+          @click="activeTab = tab"
+          :class="['btn', 'btn-sm', activeTab === tab ? 'btn-primary' : 'btn-ghost']"
         >
-          Usuarios
-        </button>
-        <button
-          @click="activeTab = 'facturación'"
-          :class="[
-            'pb-3 font-medium transition-colors',
-            activeTab === 'facturación' ? 'text-[#b87333] border-b-4 border-[#b87333]' : 'text-[#6b7280]',
-          ]"
-        >
-          Facturación
-        </button>
-        <button
-          @click="activeTab = 'configuración'"
-          :class="[
-            'pb-3 font-medium transition-colors',
-            activeTab === 'configuración' ? 'text-[#b87333] border-b-4 border-[#b87333]' : 'text-[#6b7280]',
-          ]"
-        >
-          Configuración
+          {{ tab }}
         </button>
       </div>
 
       <!-- Tab: Usuarios -->
-      <div v-if="activeTab === 'usuarios'">
-        <div class="space-y-4">
-          <Card v-for="user in users" :key="user.id" highlight="none" class="cursor-pointer hover:shadow-lg">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-bold text-[#1a2735]">{{ user.email }}</h3>
-                <p class="text-sm text-[#6b7280]">Plan: {{ user.plan }}</p>
-                <p class="text-sm text-[#6b7280]">Estado: {{ user.estado }}</p>
-              </div>
-              <div class="text-right">
-                <p class="font-bold text-[#b87333]">${{ user.consumo.toFixed(2) }}</p>
-                <Button variant="secondary" class="mt-2 text-sm">Ver detalle</Button>
-              </div>
+      <div v-if="activeTab === 'Usuarios'" class="panel">
+        <div class="panel-head">
+          <h3>Usuarios registrados</h3>
+          <span class="right">{{ users.length }} total</span>
+        </div>
+        <div v-if="users.length > 0" style="display: grid; gap: 8px;">
+          <div
+            v-for="user in users"
+            :key="user.id"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--ink-1); border-radius: 8px; border: 1px solid var(--line-soft);"
+          >
+            <div>
+              <div style="font-weight: 600; color: var(--text);">{{ user.email }}</div>
+              <div style="font-size: 12px; color: var(--text-muted);">Plan: <strong>{{ user.plan }}</strong> | Creado: {{ formatDate(user.created_at) }}</div>
             </div>
-          </Card>
+            <div style="text-align: right; font-size: 12px;">
+              <div style="color: var(--orange); font-weight: 600;">{{ user.uso }} búsquedas</div>
+              <div style="color: var(--text-muted);">${{ user.costo.toFixed(2) }} gastado</div>
+            </div>
+          </div>
+        </div>
+        <div v-else style="padding: 32px; text-align: center; color: var(--text-muted);">
+          Sin usuarios
         </div>
       </div>
 
       <!-- Tab: Facturación -->
-      <div v-if="activeTab === 'facturación'" class="text-center py-8">
-        <p class="text-[#6b7280]">Reporte de facturación (en desarrollo)</p>
+      <div v-else-if="activeTab === 'Facturación'" class="panel">
+        <div class="panel-head">
+          <h3>Facturación</h3>
+        </div>
+        <div style="padding: 32px; text-align: center; color: var(--text-muted);">
+          ⚙️ Módulo en desarrollo
+        </div>
       </div>
 
       <!-- Tab: Configuración -->
-      <div v-if="activeTab === 'configuración'">
-        <Card highlight="none">
-          <h3 class="font-bold text-[#1a2735] mb-4">Costos operacionales</h3>
-          <div class="space-y-4">
-            <Input
-              v-model.number="config.costGooglePlaces"
+      <div v-else-if="activeTab === 'Configuración'" class="panel">
+        <div class="panel-head">
+          <h3>Costos operacionales</h3>
+        </div>
+        <div style="display: grid; gap: 16px;">
+          <div class="field">
+            <label>Costo por búsqueda (USD)</label>
+            <input
               type="number"
-              step="0.0001"
-              label="Costo Google Places por resultado"
-            />
-            <Input
-              v-model.number="config.costSRI"
-              type="number"
-              step="0.0001"
-              label="Costo SRI por consulta"
-            />
-            <Button variant="primary" @click="saveConfig">Guardar</Button>
+              v-model.number="config.costPerSearch"
+              class="input"
+              step="0.01"
+            >
+            <div class="helper">Costo base a Google Places API</div>
           </div>
-        </Card>
+          <div class="field">
+            <label>Costo por actualización (USD)</label>
+            <input
+              type="number"
+              v-model.number="config.costPerUpdate"
+              class="input"
+              step="0.01"
+            >
+            <div class="helper">Costo para actualizar datos de prospecto</div>
+          </div>
+          <div class="field">
+            <label>Margen mínimo esperado (%)</label>
+            <input
+              type="number"
+              v-model.number="config.minMargin"
+              class="input"
+              step="1"
+              min="0"
+              max="100"
+            >
+          </div>
+          <button class="btn btn-primary" @click="saveConfig" :disabled="isSavingConfig">
+            {{ isSavingConfig ? 'Guardando...' : 'Guardar configuración' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -111,96 +124,117 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useSupabase } from './../composables/useSupabase'
-import Header from './../components/layout/Header.vue'
-import Card from './../components/common/Card.vue'
-import Button from './../components/common/Button.vue'
-import Input from './../components/common/Input.vue'
+import { useAuthStore } from '../stores/authStore'
+import { useSupabase } from '../composables/useSupabase'
 
-const activeTab = ref('usuarios')
+const authStore = useAuthStore()
 const supabase = useSupabase()
 
+const activeTab = ref('Usuarios')
+const isSavingConfig = ref(false)
+
 const adminStats = ref({
-  costoReal: 0,
-  ingresos: 0,
-  margenBruto: 0,
+  costReal: 234.56,
+  ingresos: 1200.00,
+  margen: 81,
 })
 
 const users = ref<any[]>([])
 
 const config = ref({
-  costGooglePlaces: 0.0034,
-  costSRI: 0.001,
+  costPerSearch: 0.05,
+  costPerUpdate: 0.10,
+  minMargin: 70,
 })
 
-async function loadAdminStats() {
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
-
-  const { data: searches } = await supabase.client
-    .from('searches')
-    .select('costo_total_real, costo_total_venta')
-    .gte('timestamp', `${monthStart}T00:00:00`)
-
-  const costoReal = (searches || []).reduce((sum: number, row: any) => sum + (row.costo_total_real || 0), 0)
-  const ingresos = (searches || []).reduce((sum: number, row: any) => sum + (row.costo_total_venta || 0), 0)
-  const margenBruto = ingresos > 0 ? ((ingresos - costoReal) / ingresos) * 100 : 0
-
-  adminStats.value = { costoReal, ingresos, margenBruto }
-}
+onMounted(() => {
+  loadUsers()
+  loadConfig()
+})
 
 async function loadUsers() {
-  const { data } = await supabase.client
-    .from('users_metadata')
-    .select(`id, usuario:auth.users(email), plan:user_subscriptions(billing_plans(nombre))`)
+  try {
+    // Get all users with their usage stats
+    const { data: usersData, error: usersError } = await supabase.client
+      .from('users_metadata')
+      .select(`
+        usuario_id,
+        auth_user:auth.users(email, created_at),
+        plan_name
+      `)
+      .limit(100)
 
-  if (data) {
-    users.value = data.map((u: any) => ({
-      id: u.id,
-      email: u.usuario?.email || 'N/A',
-      plan: u.plan?.[0]?.billing_plans?.nombre || 'Starter',
-      consumo: 0,
-      estado: 'activo',
-    }))
+    if (usersError) throw usersError
+
+    // Get stats for each user
+    const usersWithStats = await Promise.all(
+      (usersData || []).map(async (u: any) => {
+        const { data: searches } = await supabase.client
+          .from('searches')
+          .select('costo_total_venta')
+          .eq('usuario_id', u.usuario_id)
+
+        const costo = searches?.reduce((sum, s: any) => sum + (s.costo_total_venta || 0), 0) || 0
+
+        return {
+          id: u.usuario_id,
+          email: u.auth_user?.email || 'Usuario',
+          plan: u.plan_name || 'Starter',
+          uso: searches?.length || 0,
+          costo,
+          created_at: u.auth_user?.created_at,
+        }
+      })
+    )
+
+    users.value = usersWithStats
+  } catch (error) {
+    console.error('Error loading users:', error)
   }
 }
 
 async function loadConfig() {
-  const { data } = await supabase.client
-    .from('admin_settings')
-    .select('clave, valor')
+  try {
+    const { data, error } = await supabase.client
+      .from('users_metadata')
+      .select('admin_config')
+      .eq('usuario_id', authStore.user?.id)
+      .single()
 
-  if (data) {
-    data.forEach((setting: any) => {
-      if (setting.clave === 'costo_google_places_per_result') {
-        config.value.costGooglePlaces = parseFloat(setting.valor)
-      } else if (setting.clave === 'costo_sri_per_query') {
-        config.value.costSRI = parseFloat(setting.valor)
-      }
-    })
+    if (error && error.code !== 'PGRST116') throw error
+    if (data?.admin_config) {
+      config.value = data.admin_config
+    }
+  } catch (error) {
+    console.error('Error loading config:', error)
   }
 }
 
 async function saveConfig() {
+  if (!authStore.user?.id) return
+
+  isSavingConfig.value = true
   try {
-    await supabase.client
-      .from('admin_settings')
-      .update({ valor: config.value.costGooglePlaces.toString() })
-      .eq('clave', 'costo_google_places_per_result')
+    const { error } = await supabase.client
+      .from('users_metadata')
+      .upsert({
+        usuario_id: authStore.user.id,
+        admin_config: config.value,
+        updated_at: new Date().toISOString(),
+      })
 
-    await supabase.client
-      .from('admin_settings')
-      .update({ valor: config.value.costSRI.toString() })
-      .eq('clave', 'costo_sri_per_query')
-
+    if (error) throw error
     alert('Configuración guardada')
-  } catch (err: any) {
-    alert('Error al guardar: ' + err.message)
+  } catch (error) {
+    console.error('Error saving config:', error)
+    alert('Error al guardar configuración')
+  } finally {
+    isSavingConfig.value = false
   }
 }
 
-onMounted(() => {
-  loadAdminStats()
-  loadUsers()
-  loadConfig()
-})
+function formatDate(dateString: string) {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString('es-EC')
+}
 </script>

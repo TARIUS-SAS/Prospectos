@@ -1,11 +1,11 @@
 <template>
   <Teleport to="body" v-if="modelValue">
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
       <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
-        <div v-if="title" class="text-lg font-bold text-[#1a2735] mb-4">
+        <div v-if="title" class="text-lg font-bold text-navy mb-4 font-display">
           {{ title }}
         </div>
-        <div class="text-[#1a2735] mb-6">
+        <div class="text-navy mb-6 font-body">
           <slot />
         </div>
         <div class="flex gap-3 justify-end">

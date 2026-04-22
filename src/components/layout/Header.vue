@@ -1,31 +1,44 @@
 <template>
-  <header class="bg-white border-b-2 border-[#d4c4bb] mb-8">
+  <header class="bg-white border-b border-gray-200 shadow-sm">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span class="text-2xl font-bold text-[#b87333]">PROSPECTOR</span>
+        <span class="text-2xl font-bold text-copper font-display">PROSPECTOR</span>
       </div>
 
-      <nav class="hidden md:flex gap-6">
-        <router-link to="/dashboard" class="text-[#1a2735] hover:text-[#b87333] transition-colors">
+      <nav class="hidden md:flex gap-8">
+        <router-link
+          to="/dashboard"
+          class="text-navy hover:text-copper transition-colors duration-300 text-sm font-medium"
+        >
           Dashboard
         </router-link>
-        <router-link to="/history" class="text-[#1a2735] hover:text-[#b87333] transition-colors">
+        <router-link
+          to="/history"
+          class="text-navy hover:text-copper transition-colors duration-300 text-sm font-medium"
+        >
           Mis búsquedas
         </router-link>
-        <router-link to="/saved" class="text-[#1a2735] hover:text-[#b87333] transition-colors">
+        <router-link
+          to="/saved"
+          class="text-navy hover:text-copper transition-colors duration-300 text-sm font-medium"
+        >
           Guardados
         </router-link>
-        <router-link to="/admin" v-if="authStore.isAdmin" class="text-[#1a2735] hover:text-[#b87333] transition-colors">
+        <router-link
+          v-if="authStore.isAdmin"
+          to="/admin"
+          class="text-navy hover:text-copper transition-colors duration-300 text-sm font-medium"
+        >
           Admin
         </router-link>
       </nav>
 
       <div class="flex items-center gap-4">
         <div class="text-right">
-          <p class="text-sm font-medium text-[#1a2735]">{{ authStore.user?.email }}</p>
-          <p v-if="authStore.isAdmin" class="text-xs text-[#b87333]">Admin</p>
+          <p class="text-sm font-medium text-navy font-body">{{ authStore.user?.email }}</p>
+          <p v-if="authStore.isAdmin" class="text-xs text-copper font-body">Admin</p>
         </div>
-        <Button variant="secondary" @click="handleLogout">
+        <Button variant="secondary" size="sm" @click="handleLogout">
           Logout
         </Button>
       </div>

@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'rounded-lg border-2 border-[#d4c4bb] bg-white p-4 shadow-sm hover:shadow-md transition-shadow',
+      'rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all duration-300',
       highlightClass,
     ]"
   >
@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const highlightClass = computed(() => {
   if (props.highlight === 'hot') {
-    return 'bg-green-50 border-[#22c55e]'
+    return 'bg-green-50 border-success'
   }
   return ''
 })

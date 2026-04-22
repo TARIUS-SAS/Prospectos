@@ -22,7 +22,14 @@
       "Bash(sed -i \"s/@\\\\/components/.\\\\/..\\\\/components/g\" src/views/*.vue)",
       "Bash(curl -s http://localhost:5177/)",
       "Bash(curl -s http://localhost:5178/)",
-      "Bash(git commit -m 'fix: resolver imports alias y rol admin en cliente *)"
+      "Bash(git commit -m 'fix: resolver imports alias y rol admin en cliente *)",
+      "Bash(git config *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'fix: remover configuración de serverless functions de vercel.json *)",
+      "Bash(curl -s https://prospectos-izbq-self.vercel.app/login)",
+      "WebFetch(domain:point-collector.lovable.app)"
     ]
   }
 }

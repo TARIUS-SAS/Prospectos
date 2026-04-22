@@ -1,31 +1,48 @@
 <template>
-  <div class="min-h-screen bg-[#e8d8cb] p-6">
-    <Header />
+  <div class="app-content">
+    <div class="page-head">
+      <div class="page-head-left">
+        <p>Historial</p>
+        <h1>Mis búsquedas</h1>
+      </div>
+    </div>
 
-    <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold text-[#1a2735] mb-8">Mis búsquedas</h1>
+    <div class="page-main">
+      <div v-if="isLoading" style="text-align: center; padding: 48px 24px;">
+        <div style="width: 48px; height: 48px; border: 4px solid var(--orange); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+        <div style="color: var(--text-muted);">Cargando búsquedas...</div>
+      </div>
 
-      <div class="space-y-4">
-        <div v-if="searches.length === 0" class="text-center py-8">
-          <p class="text-[#6b7280]">No hay búsquedas realizadas</p>
-          <router-link to="/search">
-            <Button variant="primary" class="mt-4">Nueva búsqueda</Button>
-          </router-link>
-        </div>
-
-        <Card v-for="search in searches" :key="search.id" highlight="none" class="cursor-pointer hover:shadow-lg">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="font-bold text-[#1a2735]">{{ search.query }}</h3>
-              <p class="text-sm text-[#6b7280]">{{ search.cantidad_resultados_obtenida }} resultados</p>
-              <p class="text-xs text-[#6b7280] mt-1">{{ formatDate(search.timestamp) }}</p>
+      <div v-else-if="searches.length > 0" style="display: grid; gap: 12px;">
+        <div v-for="search in searches" :key="search.id" class="panel">
+          <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: var(--text); margin-bottom: 4px;">
+                {{ search.query || `${search.tipo_negocio || 'Búsqueda'} - ${search.zona || 'General'}` }}
+              </div>
+              <div style="font-size: 13px; color: var(--text-muted);">
+                {{ search.cantidad_resultados || 0 }} resultados encontrados
+              </div>
             </div>
-            <div class="text-right">
-              <p class="font-bold text-[#b87333]">${{ search.costo_total_venta.toFixed(2) }}</p>
-              <Button variant="secondary" class="mt-2 text-sm">Ver resultados</Button>
+            <div style="text-align: right;">
+              <div style="font-weight: 600; color: var(--orange);">${{ (search.costo_total_venta || 0).toFixed(2) }}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ formatDate(search.created_at) }}</div>
             </div>
+            <router-link
+              :to="{ name: 'Search', query: { from: 'history', id: search.id } }"
+              class="btn btn-sm btn-secondary"
+            >
+              Ver resultados
+            </router-link>
           </div>
-        </Card>
+        </div>
+      </div>
+
+      <div v-else style="text-align: center; padding: 48px 24px;">
+        <div style="color: var(--text-muted); margin-bottom: 12px;">📭 No hay búsquedas registradas</div>
+        <router-link to="/search" class="btn btn-primary btn-sm">
+          Realizar primera búsqueda
+        </router-link>
       </div>
     </div>
   </div>
@@ -33,35 +50,59 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from './../stores/authStore'
-import { useSupabase } from './../composables/useSupabase'
-import Header from './../components/layout/Header.vue'
-import Card from './../components/common/Card.vue'
-import Button from './../components/common/Button.vue'
+import { useAuthStore } from '../stores/authStore'
+import { useSupabase } from '../composables/useSupabase'
 
-const searches = ref<any[]>([])
 const authStore = useAuthStore()
 const supabase = useSupabase()
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('es-ES')
-}
+const searches = ref<any[]>([])
+const isLoading = ref(false)
 
-async function loadSearches() {
+onMounted(() => {
+  loadSearchHistory()
+})
+
+async function loadSearchHistory() {
   if (!authStore.user?.id) return
 
-  const { data } = await supabase.client
-    .from('searches')
-    .select('*')
-    .eq('usuario_id', authStore.user.id)
-    .order('timestamp', { ascending: false })
+  isLoading.value = true
+  try {
+    const { data, error } = await supabase.client
+      .from('searches')
+      .select('*')
+      .eq('usuario_id', authStore.user.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
 
-  if (data) {
-    searches.value = data
+    if (error) throw error
+    searches.value = data || []
+  } catch (error) {
+    console.error('Error loading search history:', error)
+  } finally {
+    isLoading.value = false
   }
 }
 
-onMounted(() => {
-  loadSearches()
-})
+function formatDate(dateString: string) {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('es-EC', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 </script>
+
+<style scoped>
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

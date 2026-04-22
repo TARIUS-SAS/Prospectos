@@ -30,7 +30,7 @@ ALTER TABLE admin_settings ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "admin_settings_admin_select_only" ON admin_settings
   FOR SELECT
-  USING ((SELECT raw_app_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) = 'admin');
+  USING (EXISTS(SELECT 1 FROM users_metadata WHERE id = auth.uid() AND role = 'admin'));
 
 -- Verificación de seguridad: Si necesitas AGREGAR un nuevo costo operacional
 -- (ej: 'costo_nuevo_servicio'), crea una nueva migration con INSERT, no lo hagas vía API

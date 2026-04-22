@@ -1,133 +1,116 @@
 <template>
-  <div class="min-h-screen bg-[#e8d8cb] p-6">
-    <Header />
+  <div class="app-content">
+    <div class="page-head">
+      <div class="page-head-left">
+        <p>Prospecto</p>
+        <h1>{{ prospect.nombre }}</h1>
+      </div>
+    </div>
 
-    <div class="max-w-4xl mx-auto">
-      <router-link to="/search" class="text-[#b87333] hover:underline text-sm mb-4 inline-block">
-        ← Volver
-      </router-link>
-
-      <Card highlight="none" class="mb-6">
-        <div class="flex justify-between items-start mb-4">
+    <div class="page-main" style="max-width: 1000px;">
+      <div class="panel" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
           <div>
-            <h1 class="text-3xl font-bold text-[#1a2735]">{{ prospect.nombre }}</h1>
-            <p class="text-sm text-[#6b7280]">{{ prospect.dirección }}</p>
+            <h2 style="font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 8px;">{{ prospect.nombre }}</h2>
+            <p style="color: var(--text-muted); font-size: 14px;">{{ prospect.dirección }}</p>
           </div>
-          <div class="text-right">
-            <p :class="['text-4xl font-bold', prospect.es_caliente ? 'text-[#22c55e]' : 'text-[#6b7280]']">
+          <div style="text-align: right;">
+            <div :style="['font-size: 32px; font-weight: 700; line-height: 1;', prospect.es_caliente ? 'color: var(--orange)' : 'color: var(--text-muted)']">
               {{ prospect.score }}
-            </p>
-            <p v-if="prospect.es_caliente" class="text-sm text-[#22c55e] font-bold">🔥 CALIENTE</p>
+            </div>
+            <div v-if="prospect.es_caliente" style="font-size: 12px; color: var(--orange); font-weight: 600; margin-top: 8px;">🔥 CALIENTE</div>
           </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="border-b-2 border-[#d4c4bb] mb-6 flex gap-4">
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid var(--line-soft); padding-bottom: 12px; margin-bottom: 20px;">
           <button
-            v-for="tab in tabs"
+            v-for="tab in ['Actual', 'Anterior', 'Comparación']"
             :key="tab"
             @click="activeTab = tab"
-            :class="[
-              'pb-3 font-medium transition-colors border-b-4',
-              activeTab === tab
-                ? 'text-[#b87333] border-[#b87333]'
-                : 'text-[#6b7280] border-transparent hover:text-[#1a2735]',
-            ]"
+            :class="['btn', 'btn-sm', activeTab === tab ? 'btn-primary' : 'btn-ghost']"
           >
             {{ tab }}
           </button>
         </div>
 
-        <!-- Tab Content: Actual -->
-        <div v-if="activeTab === 'Actual'" class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-xs font-medium text-[#6b7280] uppercase">Contacto</p>
-              <p class="text-lg">
-                📞 <a :href="`tel:${prospect.teléfono}`" class="text-[#b87333] hover:underline">
-                  {{ prospect.teléfono }}
-                </a>
-              </p>
+        <div v-if="activeTab === 'Actual'" style="display: grid; gap: 20px;">
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+            <div style="padding: 16px; background: var(--ink-1); border-radius: 10px; border: 1px solid var(--line-soft);">
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Contacto</div>
+              <a :href="`tel:${prospect.teléfono}`" style="font-size: 14px; color: var(--orange); text-decoration: none;">
+                📞 {{ prospect.teléfono }}
+              </a>
             </div>
-            <div>
-              <p class="text-xs font-medium text-[#6b7280] uppercase">Website</p>
-              <p class="text-lg">
-                {{ prospect.website ? '🌐 ' + prospect.website : '(Sin website)' }}
-                {{ prospect.https ? ' ✓ HTTPS' : '' }}
-              </p>
+            <div style="padding: 16px; background: var(--ink-1); border-radius: 10px; border: 1px solid var(--line-soft);">
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Website</div>
+              <a v-if="prospect.website" :href="prospect.website" target="_blank" style="font-size: 14px; color: var(--orange); text-decoration: none;">
+                🌐 {{ prospect.website }}
+              </a>
+              <div v-else style="font-size: 14px; color: var(--text-muted);">Sin website</div>
             </div>
-            <div>
-              <p class="text-xs font-medium text-[#6b7280] uppercase">SRI</p>
-              <p class="text-lg">{{ prospect.sri_activo ? '✓ Activo' : '✗ Inactivo' }}</p>
+            <div style="padding: 16px; background: var(--ink-1); border-radius: 10px; border: 1px solid var(--line-soft);">
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">SRI</div>
+              <div style="font-size: 14px; color: var(--text);">{{ prospect.sri || 'N/A' }}</div>
             </div>
-            <div>
-              <p class="text-xs font-medium text-[#6b7280] uppercase">Rating</p>
-              <p class="text-lg">⭐ {{ prospect.google_rating }}/5.0</p>
+            <div style="padding: 16px; background: var(--ink-1); border-radius: 10px; border: 1px solid var(--line-soft);">
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Rating</div>
+              <div style="font-size: 14px; color: var(--orange);">⭐ {{ prospect.rating || 'N/A' }}</div>
             </div>
           </div>
 
-          <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p class="text-xs font-medium text-[#6b7280] uppercase mb-3">Desglose de Score</p>
-            <div class="space-y-2">
-              <div
-                v-for="(value, key) in prospect.desglose"
-                :key="key"
-                class="flex justify-between text-sm"
-              >
-                <span>{{ key }}</span>
-                <span class="font-bold">+{{ value }}</span>
+          <div style="padding: 16px; background: var(--ink-1); border-radius: 10px; border: 1px solid var(--line-soft);">
+            <div style="font-weight: 600; color: var(--text); margin-bottom: 12px;">Desglose de score</div>
+            <div style="display: grid; gap: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                <span>Sin website</span>
+                <span style="color: var(--orange);">+10</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                <span>Tiene teléfono</span>
+                <span style="color: var(--orange);">+2</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; padding-top: 8px; border-top: 1px solid var(--line-soft);">
+                <span style="font-weight: 600;">Total</span>
+                <span style="color: var(--orange); font-weight: 600;">{{ prospect.score }}</span>
               </div>
             </div>
           </div>
 
-          <Button variant="primary" class="w-full">🔄 Actualizar datos ($0.10)</Button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary">Actualizar datos ($0.10)</button>
+            <button class="btn btn-primary">Guardar</button>
+            <button class="btn btn-danger">Eliminar</button>
+          </div>
         </div>
 
-        <!-- Tab Content: Anterior (placeholder) -->
-        <div v-if="activeTab === 'Anterior'" class="text-center py-8">
-          <p class="text-[#6b7280]">Sin versión anterior</p>
+        <div v-else-if="activeTab === 'Anterior'" style="text-align: center; padding: 32px; color: var(--text-muted);">
+          Sin versión anterior
         </div>
 
-        <!-- Tab Content: Comparación (placeholder) -->
-        <div v-if="activeTab === 'Comparación'" class="text-center py-8">
-          <p class="text-[#6b7280]">Sin cambios para comparar</p>
+        <div v-else-if="activeTab === 'Comparación'" style="text-align: center; padding: 32px; color: var(--text-muted);">
+          No hay datos para comparar
         </div>
-
-        <!-- Actions -->
-        <div class="mt-6 flex gap-2">
-          <Button variant="primary" class="flex-1">💾 Guardar</Button>
-          <Button variant="secondary" class="flex-1">Eliminar</Button>
-        </div>
-      </Card>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Header from './../components/layout/Header.vue'
-import Card from './../components/common/Card.vue'
-import Button from './../components/common/Button.vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 const activeTab = ref('Actual')
-const tabs = ['Actual', 'Anterior', 'Comparación']
 
 const prospect = ref({
-  id: '',
-  nombre: '',
-  dirección: '',
-  teléfono: '',
+  id: route.params.id,
+  nombre: 'Café Central',
+  dirección: 'Av. Amazonas 1234, Quito',
+  score: 12,
+  es_caliente: false,
+  teléfono: '+593 2 123 4567',
   website: '',
-  https: false,
-  sri_activo: false,
-  google_rating: 4.5,
-  score: 24,
-  es_caliente: true,
-  desglose: {
-    sin_website: 10,
-    sri_activo: 3,
-    tiene_teléfono: 2,
-    zona_comercial: 2,
-  },
+  sri: 'Activo',
+  rating: 4.5,
 })
-
 </script>

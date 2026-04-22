@@ -8,24 +8,11 @@ const supabase = createClient(
 )
 
 export const user = ref<any>(null)
+export const userRole = ref<'admin' | 'user'>('user')
 export const isLoading = ref(false)
 export const error = ref<string | null>(null)
 
-export const isAdmin = computed(() => {
-  if (!user.value) return false
-
-  // Verificar raw_app_meta_data
-  if (user.value.raw_app_meta_data?.role === 'admin') {
-    return true
-  }
-
-  // Fallback: verificar en el email (admin@test.com es admin)
-  if (user.value.email === 'admin@test.com') {
-    return true
-  }
-
-  return false
-})
+export const isAdmin = computed(() => userRole.value === 'admin')
 
 export function useAuth() {
   const router = useRouter()
@@ -66,6 +53,14 @@ export function useAuth() {
       user.value = authUser
       if (!authUser) {
         await router.push('/login')
+      } else {
+        // Fetch role from users_metadata
+        const { data: metadata } = await supabase
+          .from('users_metadata')
+          .select('role')
+          .eq('id', authUser.id)
+          .single()
+        userRole.value = metadata?.role || 'user'
       }
     } finally {
       isLoading.value = false
@@ -74,6 +69,7 @@ export function useAuth() {
 
   return {
     user,
+    userRole,
     isAdmin,
     isLoading,
     error,

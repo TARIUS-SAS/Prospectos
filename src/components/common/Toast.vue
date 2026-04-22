@@ -4,7 +4,7 @@
       <div
         v-if="visible"
         :class="[
-          'fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white font-medium shadow-lg',
+          'fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white font-medium shadow-lg font-body',
           typeClasses,
         ]"
       >
@@ -39,11 +39,11 @@ onMounted(() => {
 const typeClasses = computed(() => {
   switch (props.type) {
     case 'success':
-      return 'bg-[#22c55e]'
+      return 'bg-success'
     case 'error':
-      return 'bg-[#ef4444]'
+      return 'bg-error'
     case 'info':
-      return 'bg-[#b87333]'
+      return 'bg-copper'
     default:
       return ''
   }
@@ -53,7 +53,7 @@ const typeClasses = computed(() => {
 <style scoped>
 .toast-fade-enter-active,
 .toast-fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all 300ms ease-out;
 }
 
 .toast-fade-enter-from,

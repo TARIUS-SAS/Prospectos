@@ -1,100 +1,145 @@
 <template>
-  <div class="min-h-screen bg-[#e8d8cb] p-6">
-    <Header />
+  <div class="app-content">
+    <div class="page-head">
+      <div class="page-head-left">
+        <p>Guardados</p>
+        <h1>Prospectos guardados</h1>
+      </div>
+    </div>
 
-    <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold text-[#1a2735] mb-8">Prospectos guardados</h1>
-
-      <div class="mb-6 flex gap-2">
-        <Dropdown
-          v-model="filterEstado"
-          label="Filtrar por estado"
-          :options="estadoOptions"
-          placeholder="Todos los estados"
-        />
+    <div class="page-main">
+      <div style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center;">
+        <div>
+          <label style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; display: block; margin-bottom: 8px;">Filtrar por estado</label>
+          <select v-model="filterStatus" class="select" style="max-width: 240px;">
+            <option value="">Todos ({{ filteredProspects.length }})</option>
+            <option value="nuevo">Nuevo</option>
+            <option value="contactado">Contactado</option>
+            <option value="interesado">Interesado</option>
+            <option value="rechazado">Rechazado</option>
+          </select>
+        </div>
       </div>
 
-      <div class="space-y-4">
-        <div v-if="savedProspects.length === 0" class="text-center py-8">
-          <p class="text-[#6b7280]">No hay prospectos guardados</p>
-          <router-link to="/search">
-            <Button variant="primary" class="mt-4">Buscar prospectos</Button>
-          </router-link>
-        </div>
+      <div v-if="isLoading" style="text-align: center; padding: 48px 24px;">
+        <div style="width: 48px; height: 48px; border: 4px solid var(--orange); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+        <div style="color: var(--text-muted);">Cargando prospectos...</div>
+      </div>
 
-        <Card
-          v-for="saved in savedProspects"
-          :key="saved.id"
-          :highlight="saved.prospect.es_caliente ? 'hot' : 'none'"
-          class="cursor-pointer hover:shadow-lg"
+      <div v-else-if="filteredProspects.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+        <router-link
+          v-for="prospect in filteredProspects"
+          :key="prospect.id"
+          :to="{ name: 'ProspectDetail', params: { id: prospect.id } }"
+          class="prospect-card"
         >
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <h3 class="font-bold text-[#1a2735]">{{ saved.prospect.nombre }}</h3>
-              <p class="text-sm text-[#6b7280]">{{ saved.prospect.dirección }}</p>
-              <p class="text-sm mt-2">Score: {{ saved.prospect.score }}</p>
-              <p class="text-xs text-[#6b7280] mt-1">
-                Estado: <span class="font-bold">{{ saved.estado }}</span>
-              </p>
-              <p v-if="saved.notas" class="text-sm text-[#6b7280] mt-2">📝 {{ saved.notas }}</p>
+          <div style="font-weight: 600; color: var(--text); margin-bottom: 8px;">{{ prospect.nombre }}</div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">{{ prospect.direccion }}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div :style="['font-weight: 700; font-size: 18px;', prospect.score >= 15 ? 'color: var(--orange)' : 'color: var(--text-muted)']">
+              {{ prospect.score }}
             </div>
-            <div class="text-right">
-              <router-link :to="{ name: 'ProspectDetail', params: { id: saved.prospect_id } }">
-                <Button variant="primary" class="mb-2">Ver detalle</Button>
-              </router-link>
-              <Dropdown
-                v-model="saved.estado"
-                :options="estadoOptions"
-                class="text-sm"
-              />
-            </div>
+            <span v-if="prospect.estado" style="font-size: 10px; padding: 4px 8px; background: var(--orange-glow); color: var(--orange); border-radius: 4px; font-weight: 600; text-transform: uppercase;">
+              {{ prospect.estado }}
+            </span>
           </div>
-        </Card>
+          <div v-if="prospect.notas" style="font-size: 12px; color: var(--text-muted); padding-top: 8px; border-top: 1px solid var(--line-soft);">
+            {{ prospect.notas.substring(0, 60) }}{{ prospect.notas.length > 60 ? '...' : '' }}
+          </div>
+        </router-link>
+      </div>
+
+      <div v-else style="text-align: center; padding: 48px 24px;">
+        <div style="color: var(--text-muted); margin-bottom: 12px;">💾 No hay prospectos guardados</div>
+        <router-link to="/search" class="btn btn-primary btn-sm">
+          Realizar búsqueda
+        </router-link>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useAuthStore } from './../stores/authStore'
-import { useSupabase } from './../composables/useSupabase'
-import Header from './../components/layout/Header.vue'
-import Card from './../components/common/Card.vue'
-import Button from './../components/common/Button.vue'
-import Dropdown from './../components/common/Dropdown.vue'
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '../stores/authStore'
+import { useSupabase } from '../composables/useSupabase'
 
-const savedProspects = ref<any[]>([])
-const filterEstado = ref('')
 const authStore = useAuthStore()
 const supabase = useSupabase()
 
-const estadoOptions = [
-  { value: 'Nuevo', label: 'Nuevo' },
-  { value: 'Contactado', label: 'Contactado' },
-  { value: 'Interesado', label: 'Interesado' },
-  { value: 'Rechazado', label: 'Rechazado' },
-  { value: 'Ganado', label: 'Ganado' },
-]
+const filterStatus = ref('')
+const savedProspects = ref<any[]>([])
+const isLoading = ref(false)
 
-async function loadSavedProspects() {
-  if (!authStore.user?.id) return
-
-  const { data } = await supabase.client
-    .from('saved_prospects')
-    .select(`id, estado, notas, prospect_id, prospects(*)`)
-    .eq('usuario_id', authStore.user.id)
-    .order('created_at', { ascending: false })
-
-  if (data) {
-    savedProspects.value = data.map((saved: any) => ({
-      ...saved,
-      prospect: saved.prospects,
-    }))
-  }
-}
+const filteredProspects = computed(() => {
+  if (!filterStatus.value) return savedProspects.value
+  return savedProspects.value.filter(p => p.estado === filterStatus.value)
+})
 
 onMounted(() => {
   loadSavedProspects()
 })
+
+async function loadSavedProspects() {
+  if (!authStore.user?.id) return
+
+  isLoading.value = true
+  try {
+    const { data, error } = await supabase.client
+      .from('saved_prospects')
+      .select(`
+        id,
+        prospect_id,
+        estado,
+        notas,
+        prospects (
+          id,
+          nombre,
+          direccion,
+          score,
+          es_caliente
+        )
+      `)
+      .eq('usuario_id', authStore.user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    savedProspects.value = (data || []).map((sp: any) => ({
+      id: sp.prospect_id,
+      ...sp.prospects,
+      estado: sp.estado,
+      notas: sp.notas,
+    }))
+  } catch (error) {
+    console.error('Error loading saved prospects:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
+
+<style scoped>
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.prospect-card {
+  padding: 16px;
+  background: var(--ink-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  transition: all 180ms ease-out;
+  display: block;
+}
+
+.prospect-card:hover {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-glow);
+}
+</style>

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useSupabase } from '../composables/useSupabase'
 
 export interface DailyCost {
   búsquedas: number
@@ -11,6 +12,8 @@ export interface DailyCost {
 export interface MonthlyCost extends DailyCost {}
 
 export const useCostStore = defineStore('cost', () => {
+  const supabase = useSupabase()
+
   const dailyCost = ref<DailyCost>({
     búsquedas: 0,
     empresas: 0,
@@ -26,6 +29,11 @@ export const useCostStore = defineStore('cost', () => {
   })
 
   const costHistory = ref<any[]>([])
+
+  // Config costs
+  const costPerSearch = ref<number>(0.50)
+  const costPerUpdate = ref<number>(0.10)
+  const minMargin = ref<number>(30)
 
   function updateDailyCost(updates: Partial<DailyCost>) {
     dailyCost.value = { ...dailyCost.value, ...updates }
@@ -51,13 +59,35 @@ export const useCostStore = defineStore('cost', () => {
     costHistory.value = []
   }
 
+  async function loadConfig() {
+    try {
+      const { data } = await supabase.client
+        .from('admin_config')
+        .select('clave, valor')
+
+      if (data) {
+        data.forEach((item: any) => {
+          if (item.clave === 'costo_por_búsqueda') costPerSearch.value = item.valor
+          if (item.clave === 'costo_por_actualización') costPerUpdate.value = item.valor
+          if (item.clave === 'margen_mínimo_percent') minMargin.value = item.valor
+        })
+      }
+    } catch (error) {
+      console.error('Error loading cost config:', error)
+    }
+  }
+
   return {
     dailyCost,
     monthlyCost,
     costHistory,
+    costPerSearch,
+    costPerUpdate,
+    minMargin,
     updateDailyCost,
     updateMonthlyCost,
     addToHistory,
     clearHistory,
+    loadConfig,
   }
 })

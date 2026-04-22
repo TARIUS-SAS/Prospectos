@@ -1,118 +1,121 @@
 <template>
-  <div class="min-h-screen bg-[#e8d8cb] p-6">
-    <Header />
+  <div class="app-content">
+    <div class="page-head">
+      <div class="page-head-left">
+        <p>Búsqueda / Nueva</p>
+        <h1>Nueva búsqueda avanzada</h1>
+      </div>
+    </div>
 
-    <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold text-[#1a2735] mb-8">Nueva búsqueda avanzada</h1>
-
-      <Card highlight="none" class="mb-6">
-        <form @submit.prevent="handleSearch" class="space-y-4">
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-[#1a2735]">Parámetros de búsqueda (mínimo 1)</label>
+    <div class="page-main">
+      <div class="search-form-panel">
+        <form @submit.prevent="handleSearch">
+          <div style="margin-bottom: 16px;">
+            <label style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">
+              Filtros (mínimo 1)
+            </label>
           </div>
 
-          <Dropdown
-            v-model="filters.zona"
-            label="Zona"
-            :options="zonas"
-            placeholder="Selecciona zona"
-          />
-
-          <Dropdown
-            v-model="filters.tipo_negocio"
-            label="Tipo de negocio"
-            :options="tiposNegocio"
-            placeholder="Selecciona tipo"
-          />
-
-          <Input
-            v-model="filters.nombre"
-            label="Nombre"
-            placeholder="Buscar por nombre"
-          />
-
-          <Dropdown
-            v-model="filters.empleados_range"
-            label="Rango de empleados"
-            :options="rangosEmpleados"
-            placeholder="Selecciona rango"
-          />
-
-          <Dropdown
-            v-model="filters.presencia_web"
-            label="Presencia web"
-            :options="presenciaWebOptions"
-            placeholder="Selecciona tipo"
-          />
-
-          <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
-            <p class="text-sm text-blue-900 mb-2">
-              💰 <strong>Costo estimado:</strong>
-            </p>
-            <p class="text-lg font-bold text-blue-900">
-              ${{ estimatedCost.toFixed(2) }}
-            </p>
-            <p class="text-xs text-blue-700 mt-1">
-              {{ filtrosCuenta }} criterios + {{ cantidadResultados }} empresas
-            </p>
+          <!-- Dynamic filters -->
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <FilterRow
+              v-for="(filter, idx) in filterStore.filters"
+              :key="filter.id"
+              :field="filter.field"
+              :value="filter.value"
+              :canRemove="filterStore.filters.length > 1"
+              @update:field="(f) => filterStore.updateFilter(filter.id, filterStore.filters.find(x => x.id === filter.id)?.value || '')"
+              @update:value="(v) => filterStore.updateFilter(filter.id, v)"
+              @remove="filterStore.removeFilter(filter.id)"
+            />
           </div>
 
-          <div class="flex gap-2 items-end">
-            <div class="flex-1">
-              <label class="text-sm font-medium text-[#1a2735]">Cantidad de resultados</label>
-              <Input
-                v-model.number="cantidadResultados"
-                type="number"
-                min="1"
-                max="50"
-              />
+          <!-- Add filter button -->
+          <button
+            v-if="filterStore.filters.length > 0"
+            type="button"
+            @click="addNewFilter"
+            class="btn btn-secondary"
+            style="margin-bottom: 20px; width: 100%;"
+          >
+            + Agregar filtro
+          </button>
+
+          <!-- Cost estimate -->
+          <div v-if="filterStore.isValidToSearch" style="padding: 16px 20px; background: linear-gradient(135deg, var(--orange-glow), transparent); border: 1px solid var(--orange-line); border-radius: 10px; display: flex; align-items: center; margin-bottom: 20px;">
+            <div>
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">💰 Costo estimado</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <div style="font-size: 24px; font-weight: 700; color: var(--orange);">${{ estimatedCost.toFixed(2) }}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">{{ filterStore.filterCount }} filtros × {{ cantidadResultados }} empresas</div>
+              </div>
             </div>
-            <Button variant="primary" type="submit" :disabled="isLoading || !puedeSearch">
-              {{ isLoading ? 'Buscando...' : '🔍 Buscar' }}
-            </Button>
           </div>
 
-          <Button variant="secondary" type="button" @click="limpiarFiltros" class="w-full">
-            Limpiar
-          </Button>
-        </form>
-      </Card>
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div class="field">
+              <label>Cantidad de resultados</label>
+              <input v-model.number="cantidadResultados" type="number" min="1" max="100" class="input">
+            </div>
+            <button
+              type="submit"
+              class="btn btn-primary btn-lg"
+              style="align-self: flex-end; width: 100%;"
+              :disabled="isLoading || !filterStore.isValidToSearch"
+            >
+              {{ isLoading ? 'Buscando...' : '🔍 Buscar' }}
+            </button>
+          </div>
 
-      <!-- Resultados -->
-      <div v-if="isLoading" class="text-center py-8">
-        <p class="text-[#6b7280]">Buscando... encontrados: {{ resultados.length }}</p>
+          <button type="button" @click="limpiarFiltros" class="btn btn-secondary btn-lg btn-block">
+            Limpiar filtros
+          </button>
+        </form>
       </div>
 
-      <div v-else-if="resultados.length > 0" class="space-y-4">
-        <p class="text-[#6b7280]">{{ resultados.length }} resultados encontrados</p>
+      <!-- Loading state -->
+      <div v-if="isLoading" style="text-align: center; padding: 48px 24px;">
+        <div style="width: 48px; height: 48px; border: 4px solid var(--orange); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+        <div style="color: var(--text-muted);">Buscando... <span style="color: var(--orange); font-weight: 600;">{{ resultados.length }}</span> encontrados</div>
+      </div>
+
+      <!-- Results -->
+      <div v-else-if="resultados.length > 0">
+        <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">{{ resultados.length }} resultados encontrados</div>
         <router-link
           v-for="prospect in resultados"
           :key="prospect.id"
           :to="{ name: 'ProspectDetail', params: { id: prospect.id } }"
-          class="block"
+          class="prospect-card"
         >
-          <Card :highlight="prospect.es_caliente ? 'hot' : 'none'" class="cursor-pointer hover:shadow-lg">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-bold text-[#1a2735]">{{ prospect.nombre }}</h3>
-                <p class="text-sm text-[#6b7280]">{{ prospect.dirección }}</p>
-                <p class="text-sm mt-2">
-                  📞 <a :href="`tel:${prospect.teléfono}`" class="text-[#b87333] hover:underline">{{ prospect.teléfono }}</a>
-                </p>
-              </div>
-              <div class="text-right">
-                <p :class="['text-2xl font-bold', prospect.es_caliente ? 'text-[#22c55e]' : 'text-[#6b7280]']">
-                  {{ prospect.score }}
-                </p>
-                <p v-if="prospect.es_caliente" class="text-xs text-[#22c55e] font-bold">CALIENTE</p>
-              </div>
+          <div>
+            <div style="font-weight: 600; color: var(--text); margin-bottom: 4px;">{{ prospect.nombre }}</div>
+            <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">{{ prospect.dirección }}</div>
+            <a :href="`tel:${prospect.teléfono}`" style="font-size: 13px; color: var(--orange);" @click.stop>
+              📞 {{ prospect.teléfono }}
+            </a>
+          </div>
+          <div style="text-align: right;">
+            <div :style="['font-size: 24px; font-weight: 700', prospect.es_caliente ? 'color: var(--orange)' : 'color: var(--text-muted)']">
+              {{ prospect.score }}
             </div>
-          </Card>
+            <div v-if="prospect.es_caliente" style="font-size: 11px; color: var(--orange); font-weight: 600;">🔥 CALIENTE</div>
+          </div>
         </router-link>
       </div>
 
-      <div v-else-if="errorSearch" class="text-center py-8">
-        <p class="text-[#ef4444]">{{ errorSearch }}</p>
+      <!-- Error state -->
+      <div v-else-if="errorSearch" style="text-align: center; padding: 48px 24px;">
+        <div style="color: var(--error); font-size: 16px; font-weight: 600; margin-bottom: 8px;">⚠️ Error en búsqueda</div>
+        <div style="color: var(--text-muted);">{{ errorSearch }}</div>
+      </div>
+
+      <!-- Empty state -->
+      <div v-else style="text-align: center; padding: 48px 24px;">
+        <div style="color: var(--text-muted); margin-bottom: 12px;">Agrega al menos un filtro para comenzar</div>
+        <button type="button" @click="addNewFilter" class="btn btn-primary btn-sm">
+          + Agregar primer filtro
+        </button>
       </div>
     </div>
   </div>
@@ -120,89 +123,49 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import Header from './../components/layout/Header.vue'
-import Card from './../components/common/Card.vue'
-import Input from './../components/common/Input.vue'
-import Dropdown from './../components/common/Dropdown.vue'
-import Button from './../components/common/Button.vue'
-import { useCosts } from './../composables/useCosts'
-import { useSupabase } from './../composables/useSupabase'
+import { useFilterStore } from '../stores/filterStore'
+import { useCostStore } from '../stores/costStore'
+import { useSupabase } from '../composables/useSupabase'
+import FilterRow from '../components/FilterRow.vue'
 
-const { calculateSearchCost } = useCosts()
+const filterStore = useFilterStore()
+const costStore = useCostStore()
 const supabase = useSupabase()
-
-const filters = ref({
-  zona: '',
-  tipo_negocio: '',
-  nombre: '',
-  empleados_range: '',
-  presencia_web: '',
-})
 
 const cantidadResultados = ref(20)
 const resultados = ref<any[]>([])
 const isLoading = ref(false)
 const errorSearch = ref('')
 
-const zonas = [
-  { value: 'Centro', label: 'Centro' },
-  { value: 'Cumbayá', label: 'Cumbayá' },
-  { value: 'La Carolina', label: 'La Carolina' },
-  { value: 'Quito Norte', label: 'Quito Norte' },
-  { value: 'Quito Sur', label: 'Quito Sur' },
-]
-
-const tiposNegocio = [
-  { value: 'Café', label: 'Café' },
-  { value: 'Ferretería', label: 'Ferretería' },
-  { value: 'Farmacia', label: 'Farmacia' },
-  { value: 'Restaurante', label: 'Restaurante' },
-  { value: 'Boutique', label: 'Boutique' },
-]
-
-const rangosEmpleados = [
-  { value: '1-5', label: '1-5 empleados' },
-  { value: '5-20', label: '5-20 empleados' },
-  { value: '20-50', label: '20-50 empleados' },
-  { value: '50+', label: '50+ empleados' },
-]
-
-const presenciaWebOptions = [
-  { value: 'sin_web', label: 'Sin website' },
-  { value: 'redes', label: 'Solo redes' },
-  { value: 'website', label: 'Website activo' },
-]
-
-const filtrosCuenta = computed(() => {
-  return Object.values(filters.value).filter(v => v !== '').length
-})
-
-const puedeSearch = computed(() => filtrosCuenta.value > 0)
-
 const estimatedCost = computed(() => {
-  if (!puedeSearch.value) return 0
-  return calculateSearchCost(cantidadResultados.value, filtrosCuenta.value)
+  if (!filterStore.isValidToSearch) return 0
+  return costStore.costPerSearch * cantidadResultados.value * filterStore.filterCount
 })
+
+function addNewFilter() {
+  filterStore.addFilter('zona', '')
+}
 
 async function handleSearch() {
-  if (!puedeSearch.value) return
+  if (!filterStore.isValidToSearch) return
 
   isLoading.value = true
   errorSearch.value = ''
 
   try {
+    const filtersRequest = filterStore.getFiltersForRequest()
     const token = (await supabase.client.auth.getSession()).data.session?.access_token
     if (!token) {
       throw new Error('No autenticado')
     }
 
     const response = await supabase.callEdgeFunction('search-google-places', {
-      query: filters.value.nombre || `${filters.value.tipo_negocio || 'negocios'} ${filters.value.zona}`,
-      zona: filters.value.zona,
-      tipo_negocio: filters.value.tipo_negocio || null,
-      nombre: filters.value.nombre || null,
-      empleados_range: filters.value.empleados_range || null,
-      presencia_web: filters.value.presencia_web || null,
+      query: filtersRequest.nombre || `${filtersRequest.tipo_negocio || 'negocios'} ${filtersRequest.zona}`,
+      zona: filtersRequest.zona || null,
+      tipo_negocio: filtersRequest.tipo_negocio || null,
+      nombre: filtersRequest.nombre || null,
+      empleados_range: filtersRequest.empleados_range || null,
+      presencia_web: filtersRequest.presencia_web || null,
       cantidad_resultados: cantidadResultados.value,
     })
 
@@ -220,14 +183,33 @@ async function handleSearch() {
 }
 
 function limpiarFiltros() {
-  filters.value = {
-    zona: '',
-    tipo_negocio: '',
-    nombre: '',
-    empleados_range: '',
-    presencia_web: '',
-  }
+  filterStore.clearFilters()
   resultados.value = []
   errorSearch.value = ''
+  addNewFilter()
 }
 </script>
+
+<style scoped>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.prospect-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--ink-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  transition: all 180ms ease-out;
+}
+
+.prospect-card:hover {
+  border-color: var(--orange);
+}
+</style>

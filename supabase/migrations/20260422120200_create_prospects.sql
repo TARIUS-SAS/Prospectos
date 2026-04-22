@@ -56,8 +56,8 @@ CREATE POLICY "prospects_select_all" ON prospects
 
 CREATE POLICY "prospects_update_creador" ON prospects
   FOR UPDATE
-  USING (auth.uid() = usuario_id_creador OR (SELECT raw_app_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) = 'admin')
-  WITH CHECK (auth.uid() = usuario_id_creador OR (SELECT raw_app_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) = 'admin');
+  USING (auth.uid() = usuario_id_creador OR EXISTS(SELECT 1 FROM users_metadata WHERE id = auth.uid() AND role = 'admin'))
+  WITH CHECK (auth.uid() = usuario_id_creador OR EXISTS(SELECT 1 FROM users_metadata WHERE id = auth.uid() AND role = 'admin'));
 
 COMMIT;
 

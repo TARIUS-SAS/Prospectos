@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const { user, isAdmin, isLoading, error, login, logout, checkAuth } = useAuth()
+  const { user, userRole, isAdmin, isLoading, error, login, logout, checkAuth } = useAuth()
 
   const isAuthenticated = computed(() => !!user.value)
 
@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user,
+    userRole,
     isAdmin,
     isAuthenticated,
     isLoading,
