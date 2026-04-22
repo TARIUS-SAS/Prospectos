@@ -1,8 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
+const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN")
+if (!allowedOrigin) {
+  throw new Error("ALLOWED_ORIGIN environment variable is required")
+}
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "http://localhost:5173",
+  "Access-Control-Allow-Origin": allowedOrigin,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, content-type",
 }
@@ -100,7 +105,88 @@ serve(async (req) => {
       )
     }
 
-    // Aquí iría la llamada a Google Places API con su key de Supabase secret
+    // Obtener costo real (operacional) desde admin_settings
+    // IMPORTANTE: Se calculará DESPUÉS de obtener resultados para cobrar por lo obtenido, no por lo pidió
+    const { data: costSettings } = await supabase
+      .from("admin_settings")
+      .select("valor")
+      .eq("clave", "costo_google_places_per_result")
+      .single()
+
+    const costoUnitarioReal = parseFloat(costSettings?.valor || "0.0034")
+
+    // Obtener plan activo del usuario para costos de venta (búsqueda y empresa)
+    const { data: userPlan } = await supabase
+      .from('user_subscriptions')
+      .select('billing_plans(costo_búsqueda_venta, costo_empresa_venta)')
+      .eq('usuario_id', user.id)
+      .eq('estado', 'activo')
+      .maybeSingle()
+
+    // Si no hay plan activo, obtener plan Starter desde BD (no hardcoded)
+    let costoVentaBúsqueda: number
+    let costoVentaEmpresa: number
+
+    if (userPlan?.billing_plans) {
+      // Usuario tiene plan activo, usar sus costos (incluso si son 0)
+      costoVentaBúsqueda = userPlan.billing_plans.costo_búsqueda_venta
+      costoVentaEmpresa = userPlan.billing_plans.costo_empresa_venta
+    } else {
+      // Sin plan activo, obtener plan Starter desde BD
+      const { data: starterPlan } = await supabase
+        .from('billing_plans')
+        .select('costo_búsqueda_venta, costo_empresa_venta')
+        .eq('nombre', 'Starter')
+        .single()
+
+      costoVentaBúsqueda = starterPlan?.costo_búsqueda_venta ?? 0.50
+      costoVentaEmpresa = starterPlan?.costo_empresa_venta ?? 0.05
+    }
+
+    // Obtener costo real por empresa desde admin_settings
+    const { data: costEmpresaSettings } = await supabase
+      .from("admin_settings")
+      .select("valor")
+      .eq("clave", "costo_empresa_real")
+      .single()
+
+    const costoRealEmpresa = parseFloat(costEmpresaSettings?.valor || "0.0020")
+
+    // PASO 1: Registrar búsqueda en DB con estado 'en_progreso' ANTES de llamar a Google Places
+    // Los costos son estimados (cantidad_resultados_pedida); se recalculan en PASO 3 con cantidad real obtenida
+    const estimadoCostoRealBúsqueda = costoUnitarioReal * body.cantidad_resultados
+    const { data: newSearch, error: insertError } = await supabase
+      .from('searches')
+      .insert([
+        {
+          usuario_id: user.id,
+          query: body.query,
+          zona: body.zona,
+          tipo_negocio: body.tipo_negocio || null,
+          nombre: body.nombre || null,
+          empleados_range: body.empleados_range || null,
+          presencia_web: body.presencia_web || null,
+          cantidad_resultados_pedida: body.cantidad_resultados,
+          costo_búsqueda_real: estimadoCostoRealBúsqueda,
+          costo_búsqueda_venta: costoVentaBúsqueda,
+          costo_empresas_real: 0,
+          costo_empresas_venta: 0,
+          costo_total_real: estimadoCostoRealBúsqueda,
+          costo_total_venta: costoVentaBúsqueda,
+          estado: 'en_progreso',
+        }
+      ])
+      .select('id')
+      .single()
+
+    if (insertError || !newSearch) {
+      return new Response(
+        JSON.stringify({ error: 'Error al registrar búsqueda', details: insertError?.message }),
+        { status: 500, headers: corsHeaders }
+      )
+    }
+
+    // PASO 2: Aquí iría la llamada a Google Places API con su key de Supabase secret
     // Por ahora, retorna estructura de respuesta (será implementado en fase 2)
     const mockResultados: Prospect[] = [
       {
@@ -117,27 +203,54 @@ serve(async (req) => {
       }
     ]
 
-    // Calcular costo real (obtenido de admin_settings)
-    const { data: costSettings } = await supabase
-      .from("admin_settings")
-      .select("valor")
-      .eq("clave", "costo_google_places_per_result")
-      .single()
+    // PASO 3: Actualizar búsqueda con resultados finales y costos REALES basados en cantidad obtenida
+    const cantidadEmpresas = mockResultados.length
+    // Recalcular costo de búsqueda basado en CANTIDAD OBTENIDA, no pedida
+    const costoRealBúsquedaFinal = costoUnitarioReal * cantidadEmpresas
+    const costoEmpresasReal = cantidadEmpresas * costoRealEmpresa
+    const costoEmpresasVenta = cantidadEmpresas * costoVentaEmpresa
+    const costoTotalReal = costoRealBúsquedaFinal + costoEmpresasReal
+    const costoTotalVenta = costoVentaBúsqueda + costoEmpresasVenta
 
-    const costoReal = (parseFloat(costSettings?.valor || "0.0034") * body.cantidad_resultados)
+    const { error: updateError } = await supabase
+      .from('searches')
+      .update({
+        cantidad_resultados_obtenida: cantidadEmpresas,
+        costo_búsqueda_real: costoRealBúsquedaFinal,
+        costo_empresas_real: costoEmpresasReal,
+        costo_empresas_venta: costoEmpresasVenta,
+        costo_total_real: costoTotalReal,
+        costo_total_venta: costoTotalVenta,
+        estado: 'exitosa',
+      })
+      .eq('id', newSearch.id)
+
+    if (updateError) {
+      console.error('Error al actualizar búsqueda:', updateError)
+      return new Response(
+        JSON.stringify({ error: 'Error al finalizar búsqueda', details: updateError?.message }),
+        { status: 500, headers: corsHeaders }
+      )
+    }
 
     return new Response(
       JSON.stringify({
+        búsqueda_id: newSearch.id,
         resultados: mockResultados,
-        total: mockResultados.length,
-        costo_real: costoReal,
+        total: cantidadEmpresas,
+        costo_búsqueda_real: costoRealBúsquedaFinal,
+        costo_búsqueda_venta: costoVentaBúsqueda,
+        costo_empresas_real: costoEmpresasReal,
+        costo_empresas_venta: costoEmpresasVenta,
+        costo_total_real: costoTotalReal,
+        costo_total_venta: costoTotalVenta,
       }),
       { status: 200, headers: corsHeaders }
     )
   } catch (error) {
     console.error("Error:", error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Error al procesar búsqueda" }),
       { status: 500, headers: corsHeaders }
     )
   }

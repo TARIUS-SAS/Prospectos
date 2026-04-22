@@ -101,7 +101,7 @@
               step="0.0001"
               label="Costo SRI por consulta"
             />
-            <Button variant="primary">Guardar</Button>
+            <Button variant="primary" @click="saveConfig">Guardar</Button>
           </div>
         </Card>
       </div>
@@ -110,27 +110,97 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useSupabase } from '@/composables/useSupabase'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Input from '@/components/common/Input.vue'
 
 const activeTab = ref('usuarios')
+const supabase = useSupabase()
 
 const adminStats = ref({
-  costoReal: 45.23,
-  ingresos: 287.50,
-  margenBruto: 84.2,
+  costoReal: 0,
+  ingresos: 0,
+  margenBruto: 0,
 })
 
-const users = ref<any[]>([
-  { id: '1', email: 'juan@empresa.com', plan: 'Starter', consumo: 23.05, estado: 'activo' },
-  { id: '2', email: 'maria@empresa.com', plan: 'Professional', consumo: 67.43, estado: 'activo' },
-])
+const users = ref<any[]>([])
 
 const config = ref({
   costGooglePlaces: 0.0034,
   costSRI: 0.001,
+})
+
+async function loadAdminStats() {
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+
+  const { data: searches } = await supabase.client
+    .from('searches')
+    .select('costo_total_real, costo_total_venta')
+    .gte('timestamp', `${monthStart}T00:00:00`)
+
+  const costoReal = (searches || []).reduce((sum: number, row: any) => sum + (row.costo_total_real || 0), 0)
+  const ingresos = (searches || []).reduce((sum: number, row: any) => sum + (row.costo_total_venta || 0), 0)
+  const margenBruto = ingresos > 0 ? ((ingresos - costoReal) / ingresos) * 100 : 0
+
+  adminStats.value = { costoReal, ingresos, margenBruto }
+}
+
+async function loadUsers() {
+  const { data } = await supabase.client
+    .from('users_metadata')
+    .select(`id, usuario:auth.users(email), plan:user_subscriptions(billing_plans(nombre))`)
+
+  if (data) {
+    users.value = data.map((u: any) => ({
+      id: u.id,
+      email: u.usuario?.email || 'N/A',
+      plan: u.plan?.[0]?.billing_plans?.nombre || 'Starter',
+      consumo: 0,
+      estado: 'activo',
+    }))
+  }
+}
+
+async function loadConfig() {
+  const { data } = await supabase.client
+    .from('admin_settings')
+    .select('clave, valor')
+
+  if (data) {
+    data.forEach((setting: any) => {
+      if (setting.clave === 'costo_google_places_per_result') {
+        config.value.costGooglePlaces = parseFloat(setting.valor)
+      } else if (setting.clave === 'costo_sri_per_query') {
+        config.value.costSRI = parseFloat(setting.valor)
+      }
+    })
+  }
+}
+
+async function saveConfig() {
+  try {
+    await supabase.client
+      .from('admin_settings')
+      .update({ valor: config.value.costGooglePlaces.toString() })
+      .eq('clave', 'costo_google_places_per_result')
+
+    await supabase.client
+      .from('admin_settings')
+      .update({ valor: config.value.costSRI.toString() })
+      .eq('clave', 'costo_sri_per_query')
+
+    alert('Configuración guardada')
+  } catch (err: any) {
+    alert('Error al guardar: ' + err.message)
+  }
+}
+
+onMounted(() => {
+  loadAdminStats()
+  loadUsers()
+  loadConfig()
 })
 </script>

@@ -1,8 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
+const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN")
+if (!allowedOrigin) {
+  throw new Error("ALLOWED_ORIGIN environment variable is required")
+}
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "http://localhost:5173",
+  "Access-Control-Allow-Origin": allowedOrigin,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, content-type",
 }
@@ -84,7 +89,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error:", error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Error al procesar consulta SRI" }),
       { status: 500, headers: corsHeaders }
     )
   }

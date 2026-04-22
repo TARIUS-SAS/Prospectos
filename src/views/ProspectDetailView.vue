@@ -104,13 +104,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref } from 'vue'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
-
-const route = useRoute()
 const activeTab = ref('Actual')
 const tabs = ['Actual', 'Anterior', 'Comparación']
 
@@ -133,8 +130,4 @@ const prospect = ref({
   },
 })
 
-onMounted(() => {
-  // TODO: Cargar prospecto por ID desde Supabase
-  const prospectId = route.params.id
-})
 </script>

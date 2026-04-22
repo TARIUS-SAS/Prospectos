@@ -32,21 +32,31 @@ export function useCosts() {
   }
 
   async function getPlanCosts() {
-    const { data } = await supabase.client
+    const { data: userPlan } = await supabase.client
       .from('user_subscriptions')
       .select('billing_plans(costo_búsqueda_venta, costo_empresa_venta, costo_guardado_venta)')
       .eq('usuario_id', auth.user.value?.id)
       .eq('estado', 'activo')
-      .single()
+      .maybeSingle()
 
-    if (!data?.billing_plans) {
-      return { búsqueda: 0.5, empresa: 0.05, guardado: 0.1 }
+    if (userPlan?.billing_plans) {
+      return {
+        búsqueda: userPlan.billing_plans.costo_búsqueda_venta,
+        empresa: userPlan.billing_plans.costo_empresa_venta,
+        guardado: userPlan.billing_plans.costo_guardado_venta,
+      }
     }
 
+    const { data: starterPlan } = await supabase.client
+      .from('billing_plans')
+      .select('costo_búsqueda_venta, costo_empresa_venta, costo_guardado_venta')
+      .eq('nombre', 'Starter')
+      .single()
+
     return {
-      búsqueda: data.billing_plans.costo_búsqueda_venta,
-      empresa: data.billing_plans.costo_empresa_venta,
-      guardado: data.billing_plans.costo_guardado_venta,
+      búsqueda: starterPlan?.costo_búsqueda_venta ?? 0.50,
+      empresa: starterPlan?.costo_empresa_venta ?? 0.05,
+      guardado: starterPlan?.costo_guardado_venta ?? 0.10,
     }
   }
 

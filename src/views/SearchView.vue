@@ -126,8 +126,10 @@ import Input from '@/components/common/Input.vue'
 import Dropdown from '@/components/common/Dropdown.vue'
 import Button from '@/components/common/Button.vue'
 import { useCosts } from '@/composables/useCosts'
+import { useSupabase } from '@/composables/useSupabase'
 
 const { calculateSearchCost } = useCosts()
+const supabase = useSupabase()
 
 const filters = ref({
   zona: '',
@@ -189,8 +191,27 @@ async function handleSearch() {
   errorSearch.value = ''
 
   try {
-    // TODO: Llamar Edge Function search-google-places
-    resultados.value = []
+    const token = (await supabase.client.auth.getSession()).data.session?.access_token
+    if (!token) {
+      throw new Error('No autenticado')
+    }
+
+    const response = await supabase.callEdgeFunction('search-google-places', {
+      query: filters.value.nombre || `${filters.value.tipo_negocio || 'negocios'} ${filters.value.zona}`,
+      zona: filters.value.zona,
+      tipo_negocio: filters.value.tipo_negocio || null,
+      nombre: filters.value.nombre || null,
+      empleados_range: filters.value.empleados_range || null,
+      presencia_web: filters.value.presencia_web || null,
+      cantidad_resultados: cantidadResultados.value,
+    })
+
+    if (response?.resultados) {
+      resultados.value = response.resultados.map((p: any) => ({
+        ...p,
+        es_caliente: p.es_caliente || false,
+      }))
+    }
   } catch (err: any) {
     errorSearch.value = err.message || 'Error en la búsqueda'
   } finally {

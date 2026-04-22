@@ -16,20 +16,25 @@ CREATE TABLE IF NOT EXISTS admin_settings (
 
 -- Insert default settings
 INSERT INTO admin_settings (clave, valor, descripcion) VALUES
-  ('costo_google_places_per_result', '0.0034', 'Costo real por resultado Google Places'),
-  ('costo_sri_per_query', '0.001', 'Costo real por consulta SRI'),
-  ('costo_refresh_empresa', '0.0020', 'Costo real para actualizar datos de empresa'),
+  ('costo_google_places_per_result', '0.0034', 'Costo real operacional por resultado Google Places'),
+  ('costo_empresa_real', '0.0020', 'Costo real operacional por empresa consultada'),
+  ('costo_sri_per_query', '0.001', 'Costo real operacional por consulta SRI'),
+  ('costo_refresh_empresa', '0.0020', 'Costo real operacional para actualizar datos de empresa'),
   ('refresh_interval_days', '60', 'Intervalo mínimo entre refreshes (en días)');
 
--- RLS: READ-ONLY para admins (evitar escalada de privs)
+-- RLS: READ-ONLY tabla (evitar escalada de privs vía API)
+-- IMPORTANTE: No hay policies de UPDATE/INSERT/DELETE (implícitamente denegado)
+-- Cualquier cambio en costos operacionales DEBE hacerse via SQL migration (DBA/Mateo)
+-- Razón: Evita que admins manipulen costos para alterar billing/margen en tiempo real
 ALTER TABLE admin_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "admin_settings_admin_only_select" ON admin_settings
+CREATE POLICY "admin_settings_admin_select_only" ON admin_settings
   FOR SELECT
   USING ((SELECT raw_app_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) = 'admin');
 
--- Nota: Sin policy de UPDATE/INSERT/DELETE (implícitamente denegado)
--- Los cambios de costos deben hacerse directamente en BD por DBA/Mateo, no por API
+-- Verificación de seguridad: Si necesitas AGREGAR un nuevo costo operacional
+-- (ej: 'costo_nuevo_servicio'), crea una nueva migration con INSERT, no lo hagas vía API
+-- Ejemplo: INSERT INTO admin_settings (clave, valor, descripcion) VALUES ('costo_nuevo_servicio', '0.005', 'desc');
 
 COMMIT;
 

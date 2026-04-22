@@ -10,8 +10,7 @@ export function useScoring() {
       return result
     } catch (error) {
       console.error('Error calculating score:', error)
-      // Fallback local si Edge Function falla (degradación elegante)
-      return { score: 0, desglose: {}, es_caliente: false }
+      throw error
     }
   }
 

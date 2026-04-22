@@ -56,7 +56,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
+import { useSupabase } from '@/composables/useSupabase'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
@@ -64,6 +66,8 @@ import Dropdown from '@/components/common/Dropdown.vue'
 
 const savedProspects = ref<any[]>([])
 const filterEstado = ref('')
+const authStore = useAuthStore()
+const supabase = useSupabase()
 
 const estadoOptions = [
   { value: 'Nuevo', label: 'Nuevo' },
@@ -73,7 +77,24 @@ const estadoOptions = [
   { value: 'Ganado', label: 'Ganado' },
 ]
 
+async function loadSavedProspects() {
+  if (!authStore.user?.id) return
+
+  const { data } = await supabase.client
+    .from('saved_prospects')
+    .select(`id, estado, notas, prospect_id, prospects(*)`)
+    .eq('usuario_id', authStore.user.id)
+    .order('created_at', { ascending: false })
+
+  if (data) {
+    savedProspects.value = data.map((saved: any) => ({
+      ...saved,
+      prospect: saved.prospects,
+    }))
+  }
+}
+
 onMounted(() => {
-  // TODO: Cargar prospectos guardados
+  loadSavedProspects()
 })
 </script>

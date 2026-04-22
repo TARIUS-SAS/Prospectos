@@ -52,10 +52,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
+import { useSupabase } from '@/composables/useSupabase'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import Input from '@/components/common/Input.vue'
 import Button from '@/components/common/Button.vue'
+
+const authStore = useAuthStore()
+const supabase = useSupabase()
 
 const settings = ref({
   email: '',
@@ -64,11 +69,55 @@ const settings = ref({
   resultados_por_defecto: 20,
 })
 
-function saveSearchSettings() {
-  // TODO: Guardar en BD
+async function saveSearchSettings() {
+  if (!authStore.user?.id) return
+
+  try {
+    await supabase.client
+      .from('users_metadata')
+      .update({
+        búsquedas_max_por_día: settings.value.búsquedas_max,
+      })
+      .eq('id', authStore.user.id)
+
+    alert('Configuración guardada')
+  } catch (err: any) {
+    alert('Error al guardar: ' + err.message)
+  }
+}
+
+async function loadSettings() {
+  if (!authStore.user?.id) return
+
+  try {
+    const { data: userMeta } = await supabase.client
+      .from('users_metadata')
+      .select('búsquedas_max_por_día')
+      .eq('id', authStore.user.id)
+      .single()
+
+    if (userMeta) {
+      settings.value.búsquedas_max = userMeta.búsquedas_max_por_día || 20
+    }
+
+    settings.value.email = authStore.user.email || ''
+
+    const { data: userSub } = await supabase.client
+      .from('user_subscriptions')
+      .select('billing_plans(nombre)')
+      .eq('usuario_id', authStore.user.id)
+      .eq('estado', 'activo')
+      .single()
+
+    if (userSub?.billing_plans) {
+      settings.value.plan = userSub.billing_plans.nombre
+    }
+  } catch (err) {
+    console.error('Error loading settings:', err)
+  }
 }
 
 onMounted(() => {
-  // TODO: Cargar settings del usuario
+  loadSettings()
 })
 </script>

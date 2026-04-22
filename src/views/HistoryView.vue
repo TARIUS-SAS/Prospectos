@@ -33,17 +33,35 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
+import { useSupabase } from '@/composables/useSupabase'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 
 const searches = ref<any[]>([])
+const authStore = useAuthStore()
+const supabase = useSupabase()
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('es-ES')
 }
 
+async function loadSearches() {
+  if (!authStore.user?.id) return
+
+  const { data } = await supabase.client
+    .from('searches')
+    .select('*')
+    .eq('usuario_id', authStore.user.id)
+    .order('timestamp', { ascending: false })
+
+  if (data) {
+    searches.value = data
+  }
+}
+
 onMounted(() => {
-  // TODO: Cargar búsquedas del usuario
+  loadSearches()
 })
 </script>

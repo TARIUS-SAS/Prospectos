@@ -23,18 +23,18 @@ export function useCache() {
     }
   }
 
-  async function cacheProspects(prospects: any[], sourceSearchId: string) {
+  async function cacheProspects(prospects: any[]) {
     const newProspects = []
     const cachedProspects = []
 
-    // Parallelizar queries de caché (Promise.all en lugar de loop secuencial)
-    const cacheResults = await Promise.all(
+    // Parallelizar queries de caché con allSettled para resilencia (una falla no bloquea otras)
+    const cacheResults = await Promise.allSettled(
       prospects.map(p => getCachedProspect(p.nombre, p.dirección))
     )
 
-    cacheResults.forEach((cached, index) => {
-      if (cached && cached.isFresh) {
-        cachedProspects.push(cached.prospect)
+    cacheResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value && result.value.isFresh) {
+        cachedProspects.push(result.value.prospect)
       } else {
         newProspects.push(prospects[index])
       }

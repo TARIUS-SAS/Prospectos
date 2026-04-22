@@ -94,15 +94,43 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 import { useCostStore } from '@/stores/costStore'
+import { useSupabase } from '@/composables/useSupabase'
 import Header from '@/components/layout/Header.vue'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 
 const costStore = useCostStore()
+const authStore = useAuthStore()
+const supabase = useSupabase()
+
+async function loadCosts() {
+  if (!authStore.user?.id) return
+
+  const today = new Date().toISOString().split('T')[0]
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+
+  const { data: dailyData } = await supabase.client
+    .from('searches')
+    .select('costo_total_venta')
+    .eq('usuario_id', authStore.user.id)
+    .gte('timestamp', `${today}T00:00:00`)
+
+  const { data: monthlyData } = await supabase.client
+    .from('searches')
+    .select('costo_total_venta')
+    .eq('usuario_id', authStore.user.id)
+    .gte('timestamp', `${monthStart}T00:00:00`)
+
+  const dailyTotal = (dailyData || []).reduce((sum: number, row: any) => sum + (row.costo_total_venta || 0), 0)
+  const monthlyTotal = (monthlyData || []).reduce((sum: number, row: any) => sum + (row.costo_total_venta || 0), 0)
+
+  costStore.updateDailyCost({ búsquedas: dailyTotal, empresas: 0, guardados: 0 })
+  costStore.updateMonthlyCost({ búsquedas: monthlyTotal, empresas: 0, guardados: 0 })
+}
 
 onMounted(() => {
-  // Load costs from Supabase
-  // TODO: implement in phase 2
+  loadCosts()
 })
 </script>
