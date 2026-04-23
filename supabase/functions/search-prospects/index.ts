@@ -41,26 +41,22 @@ function calculateScore(prospect: any): { score: number; breakdown: Record<strin
   const breakdown: Record<string, number> = {}
   let score = 0
 
-  // SRI Activo: +20 puntos
   if (prospect.sri_activo) {
     breakdown.sri_activo = 20
     score += 20
   }
 
-  // Google Rating: hasta +15 puntos basado en rating (máximo 5 estrellas)
   if (prospect.google_rating) {
     const ratingScore = Math.min((prospect.google_rating / 5) * 15, 15)
     breakdown.google_rating = Math.round(ratingScore)
     score += ratingScore
   }
 
-  // Google Reviews: +10 si tiene más de 10 reviews
   if (prospect.google_reviews && prospect.google_reviews > 10) {
     breakdown.google_reviews = 10
     score += 10
   }
 
-  // Presencia Web
   if (prospect.presencia_web === "website") {
     breakdown.website_https = 15
     score += 15
@@ -68,24 +64,20 @@ function calculateScore(prospect: any): { score: number; breakdown: Record<strin
     breakdown.social_media = 10
     score += 10
   } else if (!prospect.website && !prospect.has_facebook && !prospect.has_instagram) {
-    // Sin presencia web: +15 como oportunidad
     breakdown.sin_website = 15
     score += 15
   }
 
-  // Teléfono verificado: +10
   if (prospect.telefono) {
     breakdown.telefono = 10
     score += 10
   }
 
-  // Email disponible: +5
   if (prospect.email) {
     breakdown.email = 5
     score += 5
   }
 
-  // Empleados estimados: +10 si está en rango 5-50
   if (prospect.empleados_estimado) {
     if (["5-20", "20-50"].includes(prospect.empleados_estimado)) {
       breakdown.empleados = 10
@@ -93,7 +85,6 @@ function calculateScore(prospect: any): { score: number; breakdown: Record<strin
     }
   }
 
-  // Zona comercial: +5
   const zonas_comerciales = ["Centro", "Cumbayá", "La Carolina", "Quito Norte"]
   if (prospect.zona && zonas_comerciales.includes(prospect.zona)) {
     breakdown.zona_comercial = 5
@@ -124,21 +115,17 @@ function matchesFilters(prospect: any, filters: SearchFilters): boolean {
   return true
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type, x-client-info",
-}
-
 serve(async (req) => {
+  // Handle CORS preflight request
   if (req.method === "OPTIONS") {
     return new Response("", {
       status: 200,
       headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-        "Content-Length": "0"
-      }
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, content-type, apikey",
+        "Access-Control-Max-Age": "86400",
+      },
     })
   }
 
@@ -147,7 +134,10 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       })
     }
 
@@ -157,29 +147,27 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       })
     }
 
     const body = await req.json()
     const filters: SearchFilters = body
 
-    // Query prospects from database (shared across users, but rate-limited per user)
     let query = supabase.from("prospects").select("*")
 
-    // Apply filters
     if (filters.zona) query = query.eq("zona", filters.zona)
     if (filters.sri_activo) query = query.eq("sri_activo", true)
     if (filters.tipo_negocio) query = query.ilike("tipo_negocio", `%${filters.tipo_negocio}%`)
     if (filters.empleados_range) query = query.eq("empleados_estimado", filters.empleados_range)
 
-    // Rate limit removido - usuario puede hacer búsquedas sin límite diario
-
     const { data: prospects, error } = await query.limit(100)
 
     if (error) throw error
 
-    // Post-process: calculate scores and apply remaining filters
     const scored: Prospect[] = (prospects || [])
       .map((p: any) => {
         const { score, breakdown } = calculateScore(p)
@@ -187,19 +175,26 @@ serve(async (req) => {
       })
       .filter((p) => matchesFilters(p, filters))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 20) // Limit to 20 results per request
-
-    console.log(`Search completed: found ${scored.length} prospects matching filters`, {
-      timestamp: new Date().toISOString(),
-    })
+      .slice(0, 20)
 
     return new Response(JSON.stringify({ prospects: scored, count: scored.length }), {
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, content-type, apikey",
+      },
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Search error:", error)
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, content-type, apikey",
+      },
     })
   }
 })
