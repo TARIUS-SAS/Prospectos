@@ -57,7 +57,7 @@ serve(async (req) => {
     }
 
     // Si no hay usuario, usar ID anónimo para auditoría
-    const userId = user?.id || "anonymous-" + crypto.getRandomValues(new Uint8Array(8)).join("")
+    const userId = user?.id || "anon-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9)
 
     const body: SearchRequest = await req.json()
 
