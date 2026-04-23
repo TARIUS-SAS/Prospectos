@@ -12,7 +12,8 @@ export const useSearchStore = defineStore('search', () => {
     palabra_clave: '',
     empleados_range: '',
     presencia_web: '',
-    sri_activo: true
+    sri_activo: true,
+    cantidad_resultados: 20
   })
 
   const results = ref<any[]>([])
@@ -105,7 +106,8 @@ export const useSearchStore = defineStore('search', () => {
       palabra_clave: '',
       empleados_range: '',
       presencia_web: '',
-      sri_activo: true
+      sri_activo: true,
+      cantidad_resultados: 20
     }
     results.value = []
     error.value = ''

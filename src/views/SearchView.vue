@@ -74,6 +74,21 @@
             </label>
           </div>
 
+          <div class="filter-group">
+            <label>Cantidad de Resultados</label>
+            <input
+              v-model.number="searchStore.filters.cantidad_resultados"
+              type="number"
+              min="1"
+              max="100"
+              placeholder="20"
+              class="input"
+            >
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+              Mínimo: 1, Máximo: 100
+            </div>
+          </div>
+
           <button
             @click="searchStore.performSearch()"
             :disabled="!searchStore.hasFilters || searchStore.loading"
