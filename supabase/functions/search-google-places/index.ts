@@ -48,13 +48,15 @@ serve(async (req) => {
       .select("*")
       .limit(cantidadSolicitada)
 
-    if (body.zona) {
+    if (body.zona && body.zona !== "Todas" && body.zona !== "") {
       query = query.eq("zona", body.zona)
     }
-    if (body.tipo_negocio) {
+
+    // Solo aplicar búsqueda si hay términos específicos (no default "negocios")
+    if (body.tipo_negocio && body.tipo_negocio !== "") {
       query = query.ilike("tipo_negocio", `%${body.tipo_negocio}%`)
-    }
-    if (body.query) {
+    } else if (body.query && body.query !== "negocios") {
+      // Solo aplicar query si NO es el default "negocios"
       query = query.or(`nombre.ilike.%${body.query}%,tipo_negocio.ilike.%${body.query}%`)
     }
 
