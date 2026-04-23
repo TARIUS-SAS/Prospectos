@@ -3,6 +3,7 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
+  "comment": "Force rebuild 2026-04-23T03:48:00Z",
   "rewrites": [
     {
       "source": "/(.*)",
