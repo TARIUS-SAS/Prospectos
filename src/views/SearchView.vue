@@ -139,7 +139,7 @@
           </div>
 
           <div v-else class="state-box">
-            <p>👀 Configura filtros para comenzar</p>
+            <p>Sin resultados. Intenta otra búsqueda.</p>
           </div>
         </div>
       </div>
