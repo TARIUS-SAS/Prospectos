@@ -59,19 +59,24 @@ serve(async (req) => {
     let googleResponse
     let googleData
 
-    // Si no tenemos place_id, buscar por nombre
+    // Si no tenemos place_id, buscar por nombre + dirección + Quito
     if (!placeId) {
-      const searchQuery = body.business_name || `${body.business_name || 'negocio'} ${body.address || ''}`.trim()
+      const searchQuery = `${body.business_name || 'negocio'} ${body.address || 'Quito'} Ecuador`.trim()
       const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${googleApiKey}&language=es`
+
+      console.log("Searching for:", searchQuery)
 
       const searchResponse = await fetch(searchUrl)
       const searchData = await searchResponse.json()
 
+      console.log("Search results:", searchData.results?.length || 0)
+
       if (searchData.results && searchData.results.length > 0) {
         placeId = searchData.results[0].place_id
+        console.log("Found place_id:", placeId)
       } else {
         return new Response(
-          JSON.stringify({ error: "No se encontró el negocio en Google Places" }),
+          JSON.stringify({ error: `No se encontró "${body.business_name}" en Google Places. Intenta con el nombre exacto.` }),
           { status: 404, headers: corsHeaders }
         )
       }
