@@ -44,7 +44,8 @@
       "Bash(grep -vE \"^\\(2026/|PG |Do you|want|^$|applying|^Applying\\)\")",
       "Bash(curl -s \"https://fpfgjsxlnsofywlazrar.supabase.co/functions/v1/health-check\" -H \"Content-Type: application/json\")",
       "Bash(curl -i -X OPTIONS -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: authorization, content-type' https://fpfgjsxlnsofywlazrar.supabase.co/functions/v1/search-google-places)",
-      "Bash(xargs sed *)"
+      "Bash(xargs sed *)",
+      "Bash(supabase migration *)"
     ]
   }
 }
