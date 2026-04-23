@@ -1,15 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN")
-if (!allowedOrigin) {
-  throw new Error("ALLOWED_ORIGIN environment variable is required")
-}
-
 const corsHeaders = {
-  "Access-Control-Allow-Origin": allowedOrigin,
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, content-type, apikey",
 }
 
 interface SearchRequest {
@@ -39,7 +34,10 @@ interface Prospect {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
+    return new Response("", {
+      status: 200,
+      headers: corsHeaders,
+    })
   }
 
   try {
@@ -49,21 +47,17 @@ serve(async (req) => {
     )
 
     const authHeader = req.headers.get("Authorization")
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: corsHeaders }
-      )
+    let user: any = null
+
+    // Intentar obtener usuario si hay token valido
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "")
+      const { data: { user: authUser } } = await supabase.auth.getUser(token)
+      user = authUser
     }
 
-    const token = authHeader.replace("Bearer ", "")
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: corsHeaders }
-      )
-    }
+    // Si no hay usuario, usar ID anónimo para auditoría
+    const userId = user?.id || "anonymous-" + crypto.getRandomValues(new Uint8Array(8)).join("")
 
     const body: SearchRequest = await req.json()
 
@@ -102,7 +96,7 @@ serve(async (req) => {
     const { data: userPlan } = await supabase
       .from('user_subscriptions')
       .select('billing_plans(costo_búsqueda_venta, costo_empresa_venta)')
-      .eq('usuario_id', user.id)
+      .eq('usuario_id', userId)
       .eq('estado', 'activo')
       .maybeSingle()
 
@@ -142,7 +136,7 @@ serve(async (req) => {
       .from('searches')
       .insert([
         {
-          usuario_id: user.id,
+          usuario_id: userId,
           query: body.query,
           zona: body.zona,
           tipo_negocio: body.tipo_negocio || null,
