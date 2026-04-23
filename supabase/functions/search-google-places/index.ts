@@ -98,9 +98,14 @@ serve(async (req) => {
       )
     }
 
-    if (body.cantidad_resultados < 1 || body.cantidad_resultados > 50) {
+    // Limitar a máximo 10 lugares por búsqueda para controlar costos de Google Places API
+    // Costo aprox: $0.003 por Text Search + $0.005 por Place Details = $0.08 por búsqueda (10 lugares)
+    const maxResultados = 10
+    const cantidadSolicitada = Math.min(body.cantidad_resultados || 5, maxResultados)
+
+    if (cantidadSolicitada < 1) {
       return new Response(
-        JSON.stringify({ error: "cantidad_resultados debe estar entre 1 y 50" }),
+        JSON.stringify({ error: "cantidad_resultados debe ser >= 1" }),
         { status: 400, headers: corsHeaders }
       )
     }
@@ -209,7 +214,7 @@ serve(async (req) => {
       const textSearchData = await textSearchResponse.json()
 
       if (textSearchData.results && textSearchData.results.length > 0) {
-        googleResults = textSearchData.results.slice(0, body.cantidad_resultados)
+        googleResults = textSearchData.results.slice(0, cantidadSolicitada)
       }
     } catch (error) {
       console.error("Error en Google Text Search:", error)
