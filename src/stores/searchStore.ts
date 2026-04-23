@@ -1,12 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useSupabase } from '../composables/useSupabase'
-import { user } from '../composables/useAuth'
 
 export const useSearchStore = defineStore('search', () => {
   const supabase = useSupabase()
 
-  // State
   const filters = ref({
     zona: '',
     tipo_negocio: '',
@@ -21,10 +19,6 @@ export const useSearchStore = defineStore('search', () => {
   const searchHistory = ref<any[]>([])
   const loading = ref(false)
   const error = ref('')
-  const lastSearchId = ref<string | null>(null)
-
-  // Computed
-  const hasFilters = computed(() => true)
 
   const resultCount = computed(() => results.value.length)
 
@@ -32,15 +26,11 @@ export const useSearchStore = defineStore('search', () => {
     return results.value.filter((p: any) => p.score >= 70)
   })
 
-  // Actions
   async function performSearch() {
-    if (!hasFilters.value) return
-
     loading.value = true
     error.value = ''
 
     try {
-      // Call Google Places Edge Function with authentication
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-google-places`, {
         method: 'POST',
@@ -53,8 +43,6 @@ export const useSearchStore = defineStore('search', () => {
           query: filters.value.palabra_clave || filters.value.tipo_negocio || 'negocios',
           zona: filters.value.zona || 'Centro',
           tipo_negocio: filters.value.tipo_negocio,
-          empleados_range: filters.value.empleados_range,
-          presencia_web: filters.value.presencia_web,
           cantidad_resultados: filters.value.cantidad_resultados
         })
       })
@@ -64,37 +52,13 @@ export const useSearchStore = defineStore('search', () => {
       }
 
       const data = await response.json()
-
-      // Google Places Edge Function retorna resultados con ID de búsqueda
       results.value = data.resultados || []
 
-      // El Edge Function ya registra la búsqueda en la BD
-      if (data.búsqueda_id) {
-        lastSearchId.value = data.búsqueda_id
-      }
-
-      // Load history
-      await loadSearchHistory()
     } catch (e: any) {
       error.value = e.message || 'Error en la búsqueda'
       console.error('Search error:', e)
     } finally {
       loading.value = false
-    }
-  }
-
-  async function loadSearchHistory() {
-    try {
-      const { data, error: err } = await supabase.client
-        .from('searches')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (err) throw err
-      searchHistory.value = data || []
-    } catch (e: any) {
-      console.error('Error loading history:', e)
     }
   }
 
@@ -110,30 +74,6 @@ export const useSearchStore = defineStore('search', () => {
     }
     results.value = []
     error.value = ''
-  }
-
-  async function replaySearch(searchId: string) {
-    try {
-      const { data } = await supabase.client
-        .from('searches')
-        .select('*')
-        .eq('id', searchId)
-        .single()
-
-      if (data) {
-        filters.value = {
-          zona: data.zona || '',
-          tipo_negocio: data.tipo_negocio || '',
-          palabra_clave: data.palabra_clave || '',
-          empleados_range: data.empleados_range || '',
-          presencia_web: data.presencia_web || '',
-          sri_activo: data.sri_activo ?? true
-        }
-        await performSearch()
-      }
-    } catch (e: any) {
-      error.value = e.message || 'Error al repetir búsqueda'
-    }
   }
 
   function exportCSV() {
@@ -164,24 +104,15 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   return {
-    // State
     filters,
     results,
     searchHistory,
     loading,
     error,
-    lastSearchId,
-
-    // Computed
-    hasFilters,
     resultCount,
     hotProspects,
-
-    // Actions
     performSearch,
-    loadSearchHistory,
     clearFilters,
-    replaySearch,
     exportCSV
   }
 })
