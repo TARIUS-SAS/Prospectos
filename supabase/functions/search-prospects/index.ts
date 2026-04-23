@@ -127,7 +127,7 @@ function matchesFilters(prospect: any, filters: SearchFilters): boolean {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type, x-client-info",
 }
 
 serve(async (req) => {
