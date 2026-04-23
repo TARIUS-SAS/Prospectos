@@ -186,22 +186,73 @@ serve(async (req) => {
       )
     }
 
-    // PASO 2: Aquí iría la llamada a Google Places API con su key de Supabase secret
-    // Por ahora, retorna estructura de respuesta (será implementado en fase 2)
-    const mockResultados: Prospect[] = [
-      {
-        nombre: `${body.query} ${Math.random()}`,
-        dirección: `${body.zona}, Calle Principal`,
-        teléfono: "0987654321",
-        website: null,
-        https: null,
-        facebook_instagram: null,
-        google_rating: 4.5,
-        google_reviews_count: 150,
-        latitude: -0.2298,
-        longitude: -78.5249,
+    // PASO 2: Llamar a Google Places API (Text Search)
+    const googleApiKey = Deno.env.get("GOOGLE_API_KEY")
+    if (!googleApiKey) {
+      return new Response(
+        JSON.stringify({ error: "Google API key not configured" }),
+        { status: 500, headers: corsHeaders }
+      )
+    }
+
+    // Construir query para Google Places
+    // Ej: "Restaurantes en Centro, Quito, Ecuador"
+    const searchQuery = `${body.query} en ${body.zona}, Quito, Ecuador`
+    const textSearchUrl = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json")
+    textSearchUrl.searchParams.append("query", searchQuery)
+    textSearchUrl.searchParams.append("key", googleApiKey)
+    textSearchUrl.searchParams.append("language", "es")
+
+    let googleResults: any[] = []
+    try {
+      const textSearchResponse = await fetch(textSearchUrl.toString())
+      const textSearchData = await textSearchResponse.json()
+
+      if (textSearchData.results && textSearchData.results.length > 0) {
+        googleResults = textSearchData.results.slice(0, body.cantidad_resultados)
       }
-    ]
+    } catch (error) {
+      console.error("Error en Google Text Search:", error)
+      // Continuar sin resultados en lugar de fallar
+    }
+
+    // PASO 2B: Obtener detalles de cada lugar (nombre, teléfono, website, rating)
+    const resultados: Prospect[] = []
+
+    for (const place of googleResults) {
+      try {
+        const placeDetailsUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json")
+        placeDetailsUrl.searchParams.append("place_id", place.place_id)
+        placeDetailsUrl.searchParams.append("fields", "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,geometry,business_status")
+        placeDetailsUrl.searchParams.append("key", googleApiKey)
+        placeDetailsUrl.searchParams.append("language", "es")
+
+        const detailsResponse = await fetch(placeDetailsUrl.toString())
+        const detailsData = await detailsResponse.json()
+        const details = detailsData.result
+
+        if (details && details.business_status === "OPERATIONAL") {
+          resultados.push({
+            nombre: details.name || place.name,
+            dirección: details.formatted_address || place.formatted_address,
+            teléfono: details.formatted_phone_number || undefined,
+            website: details.website || undefined,
+            https: details.website ? !details.website.startsWith("http://") : undefined,
+            facebook_instagram: undefined, // No disponible en Google Places API
+            google_rating: details.rating || undefined,
+            google_reviews_count: details.user_ratings_total || 0,
+            latitude: details.geometry?.location?.lat,
+            longitude: details.geometry?.location?.lng,
+          })
+        }
+      } catch (error) {
+        console.error("Error obteniendo detalles del lugar:", error)
+        // Continuar con siguientes resultados
+      }
+    }
+
+    // Si no hay resultados de Google Places, retornar array vacío
+    const mockResultados: Prospect[] = resultados.length > 0 ? resultados : []
 
     // PASO 3: Actualizar búsqueda con resultados finales y costos REALES basados en cantidad obtenida
     const cantidadEmpresas = mockResultados.length
