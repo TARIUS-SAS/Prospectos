@@ -24,18 +24,7 @@ export const useSearchStore = defineStore('search', () => {
   const lastSearchId = ref<string | null>(null)
 
   // Computed
-  const hasFilters = computed(() => {
-    // Se permite búsqueda con solo sri_activo (búsqueda general de prospectos activos)
-    // O si algún filtro específico está configurado
-    const hasSpecificFilters = [
-      filters.value.zona,
-      filters.value.tipo_negocio,
-      filters.value.palabra_clave,
-      filters.value.empleados_range,
-      filters.value.presencia_web
-    ].some(f => f && f !== '')
-    return hasSpecificFilters || filters.value.sri_activo
-  })
+  const hasFilters = computed(() => true)
 
   const resultCount = computed(() => results.value.length)
 
