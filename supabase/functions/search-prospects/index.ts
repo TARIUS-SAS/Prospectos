@@ -159,25 +159,7 @@ serve(async (req) => {
     if (filters.tipo_negocio) query = query.ilike("tipo_negocio", `%${filters.tipo_negocio}%`)
     if (filters.empleados_range) query = query.eq("empleados_estimado", filters.empleados_range)
 
-    // Check daily search limit (max 20 searches per day per user)
-    const today = new Date().toISOString().split("T")[0]
-    const { count: searchCount, error: countError } = await supabase
-      .from("searches")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", `${today}T00:00:00`)
-
-    if (countError) {
-      console.error("Error checking search count:", countError)
-      throw countError
-    }
-
-    if ((searchCount ?? 0) >= 20) {
-      return new Response(JSON.stringify({ error: "Daily search limit reached (20)" }), {
-        status: 429,
-        headers: { "Content-Type": "application/json" },
-      })
-    }
+    // Rate limit removido - usuario puede hacer búsquedas sin límite diario
 
     const { data: prospects, error } = await query.limit(100)
 

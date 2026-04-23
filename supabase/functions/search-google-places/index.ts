@@ -67,28 +67,7 @@ serve(async (req) => {
 
     const body: SearchRequest = await req.json()
 
-    // Rate limit: verificar búsquedas realizadas hoy por usuario
-    const today = new Date().toISOString().split('T')[0]
-    const { data: searchesHoy, count: searchCount } = await supabase
-      .from('searches')
-      .select('id', { count: 'exact' })
-      .eq('usuario_id', user.id)
-      .gte('timestamp', `${today}T00:00:00`)
-
-    // Obtener límite de usuario desde users_metadata
-    const { data: userMeta } = await supabase
-      .from('users_metadata')
-      .select('búsquedas_max_por_día')
-      .eq('id', user.id)
-      .single()
-
-    const maxBúsquedas = userMeta?.búsquedas_max_por_día || 20
-    if ((searchCount || 0) >= maxBúsquedas) {
-      return new Response(
-        JSON.stringify({ error: `Límite diario de ${maxBúsquedas} búsquedas alcanzado` }),
-        { status: 429, headers: corsHeaders }
-      )
-    }
+    // Rate limit removido - usuario puede hacer búsquedas sin límite diario
 
     // Validar campos requeridos
     if (!body.query || !body.zona) {
@@ -98,14 +77,13 @@ serve(async (req) => {
       )
     }
 
-    // Limitar a máximo 10 lugares por búsqueda para controlar costos de Google Places API
-    // Costo aprox: $0.003 por Text Search + $0.005 por Place Details = $0.08 por búsqueda (10 lugares)
-    const maxResultados = 10
-    const cantidadSolicitada = Math.min(body.cantidad_resultados || 5, maxResultados)
+    // Usuario especifica cuántos lugares quiere (sin límite duro, pero recomendación de costo)
+    // Costo aprox: $0.003 por Text Search + $0.005 por Place Details
+    const cantidadSolicitada = body.cantidad_resultados || 10
 
-    if (cantidadSolicitada < 1) {
+    if (cantidadSolicitada < 1 || cantidadSolicitada > 100) {
       return new Response(
-        JSON.stringify({ error: "cantidad_resultados debe ser >= 1" }),
+        JSON.stringify({ error: "cantidad_resultados debe estar entre 1 y 100" }),
         { status: 400, headers: corsHeaders }
       )
     }
