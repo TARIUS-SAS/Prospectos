@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useSupabase } from '../composables/useSupabase'
+import { user } from '../composables/useAuth'
 
 export const useSearchStore = defineStore('search', () => {
   const supabase = useSupabase()
@@ -60,29 +61,30 @@ export const useSearchStore = defineStore('search', () => {
       const data = await response.json()
 
       results.value = data.prospects || []
-      const scoreAvg = results.value.length > 0
-        ? (results.value.reduce((sum: number, p: any) => sum + p.score, 0) / results.value.length).toFixed(2)
-        : 0
 
-      // Save search to DB
-      const { data: searchData, error: searchErr } = await supabase.client
-        .from('searches')
-        .insert({
-          zona: filters.value.zona || null,
-          tipo_negocio: filters.value.tipo_negocio || null,
-          palabra_clave: filters.value.palabra_clave || null,
-          empleados_range: filters.value.empleados_range || null,
-          presencia_web: filters.value.presencia_web || null,
-          sri_activo: filters.value.sri_activo,
-          cantidad_resultados: resultCount.value,
-          score_promedio: scoreAvg
-        })
-        .select()
+      // Save search to DB (only if user is authenticated)
+      if (user.value?.id) {
+        const { data: searchData, error: searchErr } = await supabase.client
+          .from('searches')
+          .insert({
+            usuario_id: user.value.id,
+            query: JSON.stringify(filters.value),
+            zona: filters.value.zona || null,
+            tipo_negocio: filters.value.tipo_negocio || null,
+            nombre: filters.value.nombre || null,
+            empleados_range: filters.value.empleados_range || null,
+            presencia_web: filters.value.presencia_web || null,
+            cantidad_resultados_pedida: filters.value.cantidad_resultados,
+            cantidad_resultados_obtenida: resultCount.value,
+            estado: 'exitosa'
+          })
+          .select()
 
-      if (searchErr) throw searchErr
+        if (searchErr) throw searchErr
 
-      if (searchData && searchData.length > 0) {
-        lastSearchId.value = searchData[0].id
+        if (searchData && searchData.length > 0) {
+          lastSearchId.value = searchData[0].id
+        }
       }
 
       // Load history
