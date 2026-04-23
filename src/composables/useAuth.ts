@@ -54,12 +54,12 @@ export function useAuth() {
       if (!authUser) {
         await router.push('/login')
       } else {
-        // Fetch role from users_metadata
+        // Fetch role from users_metadata (if exists)
         const { data: metadata } = await supabase
           .from('users_metadata')
           .select('role')
           .eq('id', authUser.id)
-          .single()
+          .maybeSingle()
         userRole.value = metadata?.role || 'user'
       }
     } finally {

@@ -124,9 +124,15 @@ function matchesFilters(prospect: any, filters: SearchFilters): boolean {
   return true
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, content-type",
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*" } })
+    return new Response("ok", { headers: corsHeaders })
   }
 
   try {
@@ -134,7 +140,7 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       })
     }
 
@@ -144,7 +150,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       })
     }
 
@@ -181,7 +187,7 @@ serve(async (req) => {
     })
 
     return new Response(JSON.stringify({ prospects: scored, count: scored.length }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
