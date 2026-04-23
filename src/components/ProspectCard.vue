@@ -15,10 +15,10 @@
 
       <div class="meta">
         <span v-if="prospect.google_rating" class="rating">
-          ⭐ {{ prospect.google_rating }} ({{ prospect.google_reviews }} reviews)
+          ⭐ {{ prospect.google_rating }} ({{ prospect.google_reviews_count }} reviews)
         </span>
         <span v-if="prospect.sri_activo" class="badge sri">✓ SRI Activo</span>
-        <span v-if="prospect.has_facebook || prospect.has_instagram" class="badge social">Redes</span>
+        <span v-if="prospect.facebook_instagram || prospect.has_instagram" class="badge social">Redes</span>
       </div>
     </div>
 
@@ -28,13 +28,26 @@
       <p v-else-if="prospect.score >= 50" class="warm-label">CÁLIDO</p>
       <p v-else class="cold-label">Frío</p>
 
-      <button @click="$emit('save')" class="btn btn-sm btn-primary">Guardar</button>
+      <div class="buttons">
+        <button @click="showDetail = true" class="btn btn-sm btn-secondary" title="Ver detalles completos">
+          ℹ️
+        </button>
+        <button @click="$emit('save')" class="btn btn-sm btn-primary">Guardar</button>
+      </div>
     </div>
+
+    <!-- Modal de detalle -->
+    <ProspectDetailModal
+      :isOpen="showDetail"
+      :prospect="prospect"
+      @close="showDetail = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import ProspectDetailModal from './ProspectDetailModal.vue'
 
 const props = defineProps({
   prospect: {
@@ -44,6 +57,8 @@ const props = defineProps({
 })
 
 defineEmits(['save'])
+
+const showDetail = ref(false)
 
 const scoreClass = computed(() => {
   if (props.prospect.score >= 70) return 'hot'
@@ -188,5 +203,17 @@ const scoreClass = computed(() => {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.buttons {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.buttons .btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
 }
 </style>
