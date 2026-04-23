@@ -62,6 +62,21 @@ export const useSearchStore = defineStore('search', () => {
     }
   }
 
+  async function loadSearchHistory() {
+    try {
+      const { data, error: err } = await supabase.client
+        .from('searches')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (err) throw err
+      searchHistory.value = data || []
+    } catch (e: any) {
+      console.error('Error loading history:', e)
+    }
+  }
+
   function clearFilters() {
     filters.value = {
       zona: '',
@@ -112,6 +127,7 @@ export const useSearchStore = defineStore('search', () => {
     resultCount,
     hotProspects,
     performSearch,
+    loadSearchHistory,
     clearFilters,
     exportCSV
   }
