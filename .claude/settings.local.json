@@ -34,7 +34,8 @@
       "Bash(grep -E \"\\\\.vue$\")",
       "Bash(curl -s http://localhost:5173)",
       "Bash(rm -f TESTING_CHECKLIST.md TESTING_INSTRUCTIONS.md e2e/complete-flow.spec.ts)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(git commit *)"
     ]
   }
 }

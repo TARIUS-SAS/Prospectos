@@ -33,26 +33,12 @@
         </router-link>
       </nav>
 
-      <div class="flex items-center gap-4">
-        <div class="text-right">
-          <p class="text-sm font-medium text-navy font-body">{{ authStore.user?.email }}</p>
-          <p v-if="authStore.isAdmin" class="text-xs text-copper font-body">Admin</p>
-        </div>
-        <Button variant="secondary" size="sm" @click="handleLogout">
-          Logout
-        </Button>
-      </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
 import { useAuthStore } from '../../stores/authStore'
-import Button from '../common/Button.vue'
 
 const authStore = useAuthStore()
-
-async function handleLogout() {
-  await authStore.logout()
-}
 </script>
