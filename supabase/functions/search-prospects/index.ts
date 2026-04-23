@@ -130,32 +130,19 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization")
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      })
-    }
-
-    const token = authHeader.replace("Bearer ", "")
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      })
-    }
-
     const body = await req.json()
     const filters: SearchFilters = body
+
+    // Auth is optional for now - allow public access to prospects database
+    let userId: string | null = null
+    const authHeader = req.headers.get("Authorization")
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "")
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+      if (!authError && user) {
+        userId = user.id
+      }
+    }
 
     let query = supabase.from("prospects").select("*")
 
