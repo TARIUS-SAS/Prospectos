@@ -13,6 +13,7 @@ interface SearchFilters {
   empleados_range?: string
   presencia_web?: string
   sri_activo?: boolean
+  cantidad_resultados?: number
 }
 
 interface Prospect {
