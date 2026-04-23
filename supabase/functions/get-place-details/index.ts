@@ -29,13 +29,6 @@ serve(async (req) => {
 
     const body: PlaceDetailsRequest = await req.json()
 
-    if (!body.place_id) {
-      return new Response(
-        JSON.stringify({ error: "Se requiere place_id" }),
-        { status: 400, headers: corsHeaders }
-      )
-    }
-
     const googleApiKey = Deno.env.get("GOOGLE_API_KEY")
     if (!googleApiKey) {
       return new Response(
@@ -62,10 +55,32 @@ serve(async (req) => {
       "url",
     ].join(",")
 
-    const googleUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${body.place_id}&key=${googleApiKey}&fields=${fieldsToRequest}&language=es`
+    let placeId = body.place_id
+    let googleResponse
+    let googleData
 
-    const googleResponse = await fetch(googleUrl)
-    const googleData = await googleResponse.json()
+    // Si no tenemos place_id, buscar por nombre
+    if (!placeId) {
+      const searchQuery = body.business_name || `${body.business_name || 'negocio'} ${body.address || ''}`.trim()
+      const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${googleApiKey}&language=es`
+
+      const searchResponse = await fetch(searchUrl)
+      const searchData = await searchResponse.json()
+
+      if (searchData.results && searchData.results.length > 0) {
+        placeId = searchData.results[0].place_id
+      } else {
+        return new Response(
+          JSON.stringify({ error: "No se encontró el negocio en Google Places" }),
+          { status: 404, headers: corsHeaders }
+        )
+      }
+    }
+
+    const googleUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${googleApiKey}&fields=${fieldsToRequest}&language=es`
+
+    googleResponse = await fetch(googleUrl)
+    googleData = await googleResponse.json()
 
     // Extraer costo de la respuesta
     let costUsd = 0

@@ -171,9 +171,11 @@ async function fetchDetails() {
           apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
-          place_id: props.prospect.google_places_id || props.prospect.id,
+          place_id: props.prospect.google_places_id,
           prospect_id: props.prospect.id,
           usuario_id: props.prospect.usuario_id,
+          business_name: props.prospect.nombre,
+          address: props.prospect.dirección,
         }),
       }
     )
