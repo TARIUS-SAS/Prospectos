@@ -133,17 +133,6 @@ serve(async (req) => {
     const body = await req.json()
     const filters: SearchFilters = body
 
-    // Auth is optional for now - allow public access to prospects database
-    let userId: string | null = null
-    const authHeader = req.headers.get("Authorization")
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "")
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-      if (!authError && user) {
-        userId = user.id
-      }
-    }
-
     let query = supabase.from("prospects").select("*")
 
     if (filters.zona) query = query.eq("zona", filters.zona)
