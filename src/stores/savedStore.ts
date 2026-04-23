@@ -19,8 +19,8 @@ export const useSavedStore = defineStore('saved', () => {
 
   const proximas = computed(() => {
     return saved.value
-      .filter((s: any) => s.proxima_accion)
-      .sort((a: any, b: any) => new Date(a.proxima_accion).getTime() - new Date(b.proxima_accion).getTime())
+      .filter((s: any) => s.fecha_próxima_acción)
+      .sort((a: any, b: any) => new Date(a.fecha_próxima_acción).getTime() - new Date(b.fecha_próxima_acción).getTime())
   })
 
   const proxima = computed(() => proximas.value[0] || null)
@@ -32,7 +32,7 @@ export const useSavedStore = defineStore('saved', () => {
       const { data, error: err } = await supabase.client
         .from('saved_prospects')
         .select('*, prospect:prospects(id, nombre, dirección, score, google_rating)')
-        .order('proxima_accion', { ascending: true, nullsFirst: false })
+        .order('fecha_próxima_acción', { ascending: true, nullsFirst: false })
 
       if (err) throw err
       saved.value = data || []
@@ -63,14 +63,14 @@ export const useSavedStore = defineStore('saved', () => {
     }
   }
 
-  async function updateProspectStatus(savedId: string, estado: string, notas?: string, proxima_accion?: string) {
+  async function updateProspectStatus(savedId: string, estado: string, notas?: string, fecha_próxima_acción?: string) {
     try {
       const { error: err } = await supabase.client
         .from('saved_prospects')
         .update({
           estado,
           notas: notas || null,
-          proxima_accion: proxima_accion || null
+          fecha_próxima_acción: fecha_próxima_acción || null
         })
         .eq('id', savedId)
 
