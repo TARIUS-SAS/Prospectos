@@ -29,7 +29,12 @@
       "Bash(git push *)",
       "Bash(git commit -m 'fix: remover configuración de serverless functions de vercel.json *)",
       "Bash(curl -s https://prospectos-izbq-self.vercel.app/login)",
-      "WebFetch(domain:point-collector.lovable.app)"
+      "WebFetch(domain:point-collector.lovable.app)",
+      "WebSearch",
+      "Bash(grep -E \"\\\\.vue$\")",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(rm -f TESTING_CHECKLIST.md TESTING_INSTRUCTIONS.md e2e/complete-flow.spec.ts)",
+      "Bash(git checkout *)"
     ]
   }
 }
