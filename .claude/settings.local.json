@@ -37,7 +37,11 @@
       "Bash(git checkout *)",
       "Bash(git commit *)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:srienlinea.sri.gob.ec)"
+      "WebFetch(domain:srienlinea.sri.gob.ec)",
+      "Bash(sed -i 's/CREATE INDEX IF NOT EXISTS IF NOT EXISTS /CREATE INDEX IF NOT EXISTS /g' supabase/migrations/*.sql)",
+      "Bash(sed -i 's/CREATE UNIQUE INDEX IF NOT EXISTS IF NOT EXISTS /CREATE UNIQUE INDEX IF NOT EXISTS /g' supabase/migrations/*.sql)",
+      "Bash(grep -vE \"^\\(2026/|PG |Do you|want|^$\\)\")",
+      "Bash(grep -vE \"^\\(2026/|PG |Do you|want|^$|applying|^Applying\\)\")"
     ]
   }
 }

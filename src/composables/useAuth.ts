@@ -55,12 +55,19 @@ export function useAuth() {
         await router.push('/login')
       } else {
         // Fetch role from users_metadata (if exists)
-        const { data: metadata } = await supabase
-          .from('users_metadata')
-          .select('role')
-          .eq('id', authUser.id)
-          .maybeSingle()
-        userRole.value = metadata?.role || 'user'
+        try {
+          const { data: metadata, error: metadataError } = await supabase
+            .from('users_metadata')
+            .select('role')
+            .eq('id', authUser.id)
+            .maybeSingle()
+          if (!metadataError) {
+            userRole.value = metadata?.role || 'user'
+          }
+        } catch (err) {
+          // Silently fail if users_metadata is not accessible
+          console.warn('Could not fetch user metadata:', err)
+        }
       }
     } finally {
       isLoading.value = false
