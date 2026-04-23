@@ -91,7 +91,7 @@
 
           <button
             @click="searchStore.performSearch()"
-            :disabled="!searchStore.hasFilters || searchStore.loading"
+            :disabled="searchStore.loading"
             class="btn btn-primary btn-lg"
             style="width: 100%; margin-bottom: 8px;"
           >
