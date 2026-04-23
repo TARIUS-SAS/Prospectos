@@ -31,7 +31,7 @@ export const useSavedStore = defineStore('saved', () => {
     try {
       const { data, error: err } = await supabase.client
         .from('saved_prospects')
-        .select('*, prospect:prospects(id, nombre, direccion, score, google_rating)')
+        .select('*, prospect:prospects(id, nombre, dirección, score, google_rating)')
         .order('proxima_accion', { ascending: true, nullsFirst: false })
 
       if (err) throw err

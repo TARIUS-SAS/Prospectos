@@ -50,7 +50,7 @@
               <td class="cell-name">
                 <div class="prospect-name">{{ saved.prospect?.nombre }}</div>
               </td>
-              <td class="cell-location">{{ saved.prospect?.direccion }}</td>
+              <td class="cell-location">{{ saved.prospect?.dirección }}</td>
               <td class="cell-score">
                 <span :class="['score-badge', scoreClass(saved.prospect?.score)]">
                   {{ saved.prospect?.score }}

@@ -2,7 +2,7 @@
   <div class="prospect-card" :class="{ hot: prospect.score >= 70 }">
     <div class="prospect-main">
       <h4>{{ prospect.nombre }}</h4>
-      <p class="direccion">{{ prospect.direccion || 'Sin ubicación' }}</p>
+      <p class="dirección">{{ prospect.dirección || 'Sin ubicación' }}</p>
 
       <div class="contact-row">
         <a v-if="prospect.telefono" :href="`tel:${prospect.telefono}`" class="contact-link">
@@ -87,7 +87,7 @@ const scoreClass = computed(() => {
   font-weight: 600;
 }
 
-.direccion {
+.dirección {
   margin: 0;
   font-size: 13px;
   color: var(--text-muted);

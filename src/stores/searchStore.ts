@@ -142,7 +142,7 @@ export const useSearchStore = defineStore('search', () => {
     const headers = ['Nombre', 'Dirección', 'Teléfono', 'Website', 'Rating', 'Reviews', 'Score']
     const rows = results.value.map((p: any) => [
       p.nombre,
-      p.direccion,
+      p.dirección,
       p.telefono,
       p.website || '',
       p.google_rating || '',
