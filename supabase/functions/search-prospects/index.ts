@@ -132,9 +132,13 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
+    return new Response("", {
       status: 200,
-      headers: corsHeaders
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Content-Length": "0"
+      }
     })
   }
 
