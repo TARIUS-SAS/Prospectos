@@ -41,12 +41,23 @@ export const useSearchStore = defineStore('search', () => {
     error.value = ''
 
     try {
-      // Call Edge Function
-      const { data, error: err } = await supabase.client.functions.invoke('search-prospects', {
-        body: filters.value
+      // Call Edge Function directly via fetch to avoid auth issues
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-prospects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify(filters.value)
       })
 
-      if (err) throw err
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
 
       results.value = data.prospects || []
       const scoreAvg = results.value.length > 0

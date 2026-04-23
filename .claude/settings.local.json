@@ -41,7 +41,8 @@
       "Bash(sed -i 's/CREATE INDEX IF NOT EXISTS IF NOT EXISTS /CREATE INDEX IF NOT EXISTS /g' supabase/migrations/*.sql)",
       "Bash(sed -i 's/CREATE UNIQUE INDEX IF NOT EXISTS IF NOT EXISTS /CREATE UNIQUE INDEX IF NOT EXISTS /g' supabase/migrations/*.sql)",
       "Bash(grep -vE \"^\\(2026/|PG |Do you|want|^$\\)\")",
-      "Bash(grep -vE \"^\\(2026/|PG |Do you|want|^$|applying|^Applying\\)\")"
+      "Bash(grep -vE \"^\\(2026/|PG |Do you|want|^$|applying|^Applying\\)\")",
+      "Bash(curl -s \"https://fpfgjsxlnsofywlazrar.supabase.co/functions/v1/health-check\" -H \"Content-Type: application/json\")"
     ]
   }
 }
