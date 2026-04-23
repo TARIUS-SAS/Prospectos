@@ -51,16 +51,23 @@ export const useSearchStore = defineStore('search', () => {
     error.value = ''
 
     try {
-      // Call Edge Function directly via fetch to avoid auth issues
+      // Call Google Places Edge Function with authentication
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-prospects`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-google-places`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${anonKey}`,
           'apikey': anonKey,
         },
-        body: JSON.stringify(filters.value)
+        body: JSON.stringify({
+          query: filters.value.palabra_clave || filters.value.tipo_negocio || 'negocios',
+          zona: filters.value.zona || 'Centro',
+          tipo_negocio: filters.value.tipo_negocio,
+          empleados_range: filters.value.empleados_range,
+          presencia_web: filters.value.presencia_web,
+          cantidad_resultados: filters.value.cantidad_resultados
+        })
       })
 
       if (!response.ok) {
@@ -69,31 +76,12 @@ export const useSearchStore = defineStore('search', () => {
 
       const data = await response.json()
 
-      results.value = data.prospects || []
+      // Google Places Edge Function retorna resultados con ID de búsqueda
+      results.value = data.resultados || []
 
-      // Save search to DB (only if user is authenticated)
-      if (user.value?.id) {
-        const { data: searchData, error: searchErr } = await supabase.client
-          .from('searches')
-          .insert({
-            usuario_id: user.value.id,
-            query: JSON.stringify(filters.value),
-            zona: filters.value.zona || null,
-            tipo_negocio: filters.value.tipo_negocio || null,
-            nombre: filters.value.nombre || null,
-            empleados_range: filters.value.empleados_range || null,
-            presencia_web: filters.value.presencia_web || null,
-            cantidad_resultados_pedida: filters.value.cantidad_resultados,
-            cantidad_resultados_obtenida: resultCount.value,
-            estado: 'exitosa'
-          })
-          .select()
-
-        if (searchErr) throw searchErr
-
-        if (searchData && searchData.length > 0) {
-          lastSearchId.value = searchData[0].id
-        }
+      // El Edge Function ya registra la búsqueda en la BD
+      if (data.búsqueda_id) {
+        lastSearchId.value = data.búsqueda_id
       }
 
       // Load history
